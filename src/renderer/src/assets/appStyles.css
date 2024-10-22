@@ -6,12 +6,36 @@
 }
 
 .main-container{
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
   background-color: azure;
   width: 100vw;
   height: 100vh;
   gap: 3rem;
+}
+
+.content-container{
+  background-color: bisque;
+  height: calc(100% - 1.5rem);
+}
+
+.file-list{
+  list-style: none;
+  background-color: lightblue;
+  padding: 0 2rem;
+}
+
+.file-item{
+  background-color: lightcoral;
+  display: flex;
+  justify-content: space-between;
+}
+
+
+
+
+.nav-bar{
+  width: 100%;
+  background-color: blueviolet;
+  color: white;
+  text-align: center;
+  height: 1.5rem;
 }

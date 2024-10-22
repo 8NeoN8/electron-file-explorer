@@ -16,20 +16,41 @@
   </div> -->
 
   <main class="main-container">
+    <NavBar :currentDir="currentDir"></NavBar>
 
-    <button @click="changeHomeDir()"> change home directory </button>
+    <div class="content-container">
+      <button v-if="false" @click="changeHomeDir()"> change home directory </button>
+  
+      <ul class="file-list">
+        <template v-for="(file, index) in fileList" :key="index">
+          <li tabindex="0" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)">
+            <div class="file-name">
+              {{ file.filename }}
+            </div>
+            <div v-if="!file.isDir" class="file-size">
+              {{ file.size }}
+            </div>
+          </li>
+        </template>
+      </ul>
 
-    <ul class="file-list">
-      <template v-for="(file, index) in fileList" :key="index">
-        <li tabindex="0" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)">
-          {{ file.filename }}
-        </li>
-      </template>
-    </ul>
+      <div class="route-history">
+        {{ this.dirHistory }}
+
+        <div class="buttons">
+          <button class="prev" @click="backHistory()">back</button>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          <button class="next" @click="forwardHistory()">forth</button>
+        </div>
+      </div>
+
+    </div>
+
   </main>
 </template>
 
 <script>
+import NavBar from './components/NavBar.vue';
 import config from './config.json';
 const remote = require('@electron/remote');
 const fs = require('fs');
@@ -42,14 +63,13 @@ export default {
       homeDir: config.homeDirectory,
       currentDir: config.homeDirectory,
       appConfig: config,
-      dirHistory: [],
-      dirRoutes:{
-        previous: null,
-        current: config.homeDirectory,
-        next: null
-      },
       fileList: [],
+      dirHistory: [],
+      historyIndex: 0,
     }
+  },
+  components:{
+    NavBar
   },
   computed: {
   },
@@ -71,16 +91,44 @@ export default {
           fileStats.filename = file
           fileStats.path = dir + '\\' + file
           filelist.push(fileStats)
+          if(fs.statSync(fileDir).isDirectory()){
+            fileStats.isDir = true
+          }else fileStats.isDir = false
+          fileStats.size =  Math.round(fileStats.size / 1024) + ' KB'
         })
         filelist = filelist.reverse()
-        console.log(this.fileList);
+        this.currentDir = dir
         return filelist
+      }
+    },
+    manageHistory(dir){
+
+      if(this.dirHistory[this.historyIndex+1]){
+        this.dirHistory = this.dirHistory.slice(0, this.historyIndex+1) 
+      }
+
+      this.dirHistory.push(dir)
+      this.historyIndex++
+    },
+    backHistory(){
+
+      if(this.historyIndex > 0){
+        this.historyIndex--
+        this.fileList = this.getDirInfo(this.dirHistory[this.historyIndex])
+      }
+    },
+    forwardHistory(){
+
+      if(this.dirHistory[this.historyIndex+1]){
+        this.historyIndex++
+        this.fileList = this.getDirInfo(this.dirHistory[this.historyIndex])
       }
     },
     openFileOrDir(fileOrDir){
       let isDir = fs.statSync(fileOrDir.path).isDirectory()
       if(isDir){
         this.fileList = this.getDirInfo(fileOrDir.path)
+        this.manageHistory(fileOrDir.path)
       }
 
       if(!isDir){
@@ -99,15 +147,30 @@ export default {
         default: 
           return 'xdg-open';
       }
-    }
+    },
   },
   watch:{
   },
   created() {
     this.fileList = this.getDirInfo(this.homeDir)
+    this.dirHistory.push(this.homeDir)
   },
   mounted() {
-    
+    document.addEventListener('mouseup', (e) => {
+      switch (e.button) {
+        case 3:
+          this.backHistory()
+          break;
+        case 4:
+          this.forwardHistory()
+          break;
+        default:
+          break;
+      }
+    })
+  },
+  beforeUnmount(){
+    document.removeEventListener('mouseup')
   },
 }
 </script>
