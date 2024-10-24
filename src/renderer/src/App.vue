@@ -23,7 +23,7 @@
   
       <ul class="file-list" id="file-list">
         <template v-for="(file, index) in fileList" :key="index">
-          <li tabindex="0" @focus="tabManaging($event)" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)">
+          <li tabindex="0" @focus="tabManaging($event)" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)" @keyup.enter="openFileOrDir(file)">
             <div class="file-name">
               {{ file.filename }}
             </div>
@@ -132,6 +132,8 @@ export default {
       if(isDir){
         this.fileList = this.getDirInfo(fileOrDir.path)
         this.manageHistory(fileOrDir.path)
+        this.tabManager[0].focus()
+
       }
 
       if(!isDir){
@@ -188,6 +190,12 @@ export default {
           break;
         default:
           break;
+      }
+    })
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key == 'Backspace'){
+        this.backHistory()
       }
     })
   },
