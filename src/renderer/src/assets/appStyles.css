@@ -29,7 +29,9 @@
   justify-content: space-between;
 }
 
-
+.file-item:focus{
+  background-color: green;
+}
 
 
 .nav-bar{

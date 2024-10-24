@@ -15,15 +15,15 @@
     </div>
   </div> -->
 
-  <main class="main-container">
+  <main class="main-container" @keyup="shortcutManager($event)">
     <NavBar :currentDir="currentDir"></NavBar>
 
     <div class="content-container">
       <button v-if="false" @click="changeHomeDir()"> change home directory </button>
   
-      <ul class="file-list">
+      <ul class="file-list" id="file-list">
         <template v-for="(file, index) in fileList" :key="index">
-          <li tabindex="0" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)">
+          <li tabindex="0" @focus="tabManaging($event)" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)">
             <div class="file-name">
               {{ file.filename }}
             </div>
@@ -66,6 +66,9 @@ export default {
       fileList: [],
       dirHistory: [],
       historyIndex: 0,
+      selectedFileOrFolder: null,
+      tabManager: [],
+      focusTab: null
     }
   },
   components:{
@@ -148,6 +151,25 @@ export default {
           return 'xdg-open';
       }
     },
+    shortcutManager(keyevent){
+      let taberIndex = this.tabManager.indexOf(this.focusTab)
+      if(keyevent.keyCode == 40){
+        if(this.tabManager[taberIndex+1]){
+          this.tabManager[taberIndex+1].focus()
+        }
+      }
+      if(keyevent.keyCode == 38){
+        
+        if(taberIndex > 0){
+          this.tabManager[taberIndex-1].focus()
+        }
+      }
+      
+    },
+    tabManaging(tab){
+      this.tabManager = Array.from(document.getElementsByClassName('file-item'))
+      this.focusTab = tab.srcElement
+    },
   },
   watch:{
   },
@@ -170,7 +192,6 @@ export default {
     })
   },
   beforeUnmount(){
-    document.removeEventListener('mouseup')
   },
 }
 </script>
