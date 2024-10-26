@@ -15,15 +15,15 @@
     </div>
   </div> -->
 
-  <main class="main-container" @keyup="shortcutManager($event)">
-    <NavBar :currentDir="currentDir"></NavBar>
+  <main class="main-container">
+    <NavBar :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event"></NavBar>
 
     <div class="content-container">
       <button v-if="false" @click="changeHomeDir()"> change home directory </button>
   
       <ul class="file-list" id="file-list">
         <template v-for="(file, index) in fileList" :key="index">
-          <li tabindex="0" @focus="tabManaging($event)" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)" @keyup.enter="openFileOrDir(file)">
+          <li tabindex="0" @focus="tabManaging($event),this.componentFocus = 'list'" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)" @keyup.enter="openFileOrDir(file)">
             <div class="file-name">
               {{ file.filename }}
             </div>
@@ -32,10 +32,13 @@
             </div>
           </li>
         </template>
+        <li class="file-item hidden" id="temp-file-name">
+          <input type="text" @blur="hideInput()" @keypress.enter="createFileOrDirectory(tempFileName)" @change="validateFileInput()" v-model="tempFileName">
+        </li>
       </ul>
 
       <div class="route-history">
-        {{ this.dirHistory }}
+        <!-- {{ this.dirHistory }} -->
 
         <div class="buttons">
           <button class="prev" @click="backHistory()">back</button>
@@ -68,7 +71,10 @@ export default {
       historyIndex: 0,
       selectedFileOrFolder: null,
       tabManager: [],
-      focusTab: null
+      focusTab: null,
+      componentFocus: null,
+      tempFileName: null,
+
     }
   },
   components:{
@@ -77,6 +83,22 @@ export default {
   computed: {
   },
   methods: {
+    createFileOrDirectory(inputName){
+
+      console.log(inputName);
+
+      this.hideInput()
+
+    },
+    validateFileInput(){
+
+    },
+    hideInput(){
+      let inputField = document.getElementById('temp-file-name')
+      inputField.classList.add('hidden')
+      this.tempFileName = null
+      this.tabManager[0].focus()
+    },
     ipcHandle(){
       window.Electron.ipcRenderer.send('ping')
     },
@@ -153,25 +175,127 @@ export default {
           return 'xdg-open';
       }
     },
-    shortcutManager(keyevent){
-      let taberIndex = this.tabManager.indexOf(this.focusTab)
-      if(keyevent.keyCode == 40){
-        if(this.tabManager[taberIndex+1]){
-          this.tabManager[taberIndex+1].focus()
-        }
-      }
-      if(keyevent.keyCode == 38){
-        
-        if(taberIndex > 0){
-          this.tabManager[taberIndex-1].focus()
-        }
-      }
-      
-    },
     tabManaging(tab){
       this.tabManager = Array.from(document.getElementsByClassName('file-item'))
       this.focusTab = tab.srcElement
     },
+    shortcutManager(keyevent){
+      let taberIndex = this.tabManager.indexOf(this.focusTab)
+      //console.log(keyevent);  
+      switch (keyevent.key) {
+        case 'Backspace':
+          this.backHistory()  
+          break;
+        case 'ArrowDown':
+          if(this.tabManager[taberIndex+1]){
+            this.tabManager[taberIndex+1].focus()
+          }
+          break;
+        case 'ArrowUp':
+          if(taberIndex > 0){
+            this.tabManager[taberIndex-1].focus()
+          }
+          break;
+        case 'P':
+          if (keyevent.ctrlKey) {
+            this.controlPanel()
+          }
+
+          if (keyevent.ctrlKey && keyevent.altKey) {
+            //*if global search open, select to search for date
+
+            //*if file list search open, select to search for date too, it is a different target after all
+          }
+          
+          break;
+        case 'F':
+          if (keyevent.ctrlKey) {
+            this.searchGlobalPanel()
+          }
+          break;
+        case 'G':
+          if (keyevent.ctrlKey) {
+            this.openThisFile()
+          }
+          break;
+        case 'L':
+          if (keyevent.ctrlKey) {
+            this.sortSearchCurrentFiles()
+          }
+          if (keyevent.ctrlKey && keyevent.shiftKey) {
+            this.forwardHistory()
+          }
+          break;
+        case 'H':
+          if (keyevent.ctrlKey && keyevent.shiftKey) {
+            this.openHistoryView()
+          }
+          break;
+        case 'J':
+          if (keyevent.ctrlKey && keyevent.shiftKey) {
+            this.backHistory()
+          }
+          break;
+        case 'I':
+          if (keyevent.altKey){
+
+          }
+          break;
+        case 'O':
+          if (keyevent.altKey){
+
+          }
+          break;
+        case 'N':
+          if(this.componentFocus == 'list'){
+            if(keyevent.ctrlKey & keyevent.shiftKey){
+              
+            }
+          }
+          break;
+        case '1':
+          this.focusAppComponent(0)
+          break;
+        case '2':
+          this.focusAppComponent(1)
+          break;
+        case '3':
+          console.log(3);
+          this.focusAppComponent(2)
+          break;
+
+      
+        default:
+          break;
+      }
+      
+    },
+    controlPanel(){
+
+    },
+    searchGlobalPanel(){
+
+    },
+    openThisFile(){
+
+    },
+    sortSearchCurrentFiles(){
+
+    },
+    focusAppComponent(component){
+
+      if(component == 0){
+
+      }
+      if(component == 1){
+        NavBar.methods.focusbar()
+      }
+      if(component == 2){
+        this.tabManager[0].focus()
+      }
+    },
+    
+
   },
   watch:{
   },
@@ -194,10 +318,9 @@ export default {
     })
 
     document.addEventListener('keydown', (e)=>{
-      if(e.key == 'Backspace'){
-        this.backHistory()
-      }
+      this.shortcutManager(e)
     })
+
   },
   beforeUnmount(){
   },

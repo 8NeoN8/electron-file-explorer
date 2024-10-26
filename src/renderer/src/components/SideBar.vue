@@ -1,6 +1,6 @@
 <template>
-  <div>
-
+  <div id="side-bar" class="side-bar">
+    SideBar
   </div>
 </template>
 
