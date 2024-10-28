@@ -16,7 +16,7 @@
   </div> -->
 
   <main class="main-container">
-    <NavBar :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event"></NavBar>
+    <NavBar :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event" @click="ipcHandle()"></NavBar>
 
     <div class="content-container">
       <button v-if="false" @click="changeHomeDir()"> change home directory </button>
@@ -49,6 +49,15 @@
 
     </div>
 
+
+    <dialog :open="isDialogOpen" class="confirm-delete-dialog" style="width: 50%; position: absolute; top: 45%; left: 50%; right: 50%;">
+
+      <h3>Estas seguro que quieres enviar a la papelera?</h3>
+      <div class="dialog-buttons" style="display: flex; width: 100%; justify-content: space-around;">
+        <button class="confirm-deletion">Si</button>
+        <button class="cancel-deletion">No</button>
+      </div>
+    </dialog>
   </main>
 </template>
 
@@ -75,16 +84,21 @@ export default {
       componentFocus: null,
       tempFileName: null,
       isTempNameValid: true,
+      isDialogOpen: false,
+      recycleBinDir: null,
     }
   },
   components:{
-    NavBar
+    NavBar,
   },
   computed: {
   },
   methods: {
-    ipcHandle(){
-      window.Electron.ipcRenderer.send('ping')
+    execute(command, callback) {
+      exec(command, (error, stdout, stderr) => { 
+          if(error) console.log(error);
+          callback(stdout); 
+      });
     },
     async changeHomeDir(){
       let homePath = (await remote.dialog.showOpenDialog({properties: ['openDirectory', 'singleSelection']}))
@@ -233,11 +247,23 @@ export default {
         case 'N':
           if(this.componentFocus == 'list'){
             if(keyevent.ctrlKey & keyevent.shiftKey){
-              
               document.getElementById('temp-file-name').classList.remove('hidden')
               document.getElementById('temp-input').focus()
             }
           }
+          break;
+        case 'D':
+          //* confirmation dialog for deletion
+          this.isDialogOpen = true
+
+          //* MY recycle bin location C:\$Recycle.Bin\S-1-5-21-474367234-958375406-904006301-1001
+          /*
+          *pasos para conseguir la ruta dinamicamente, en cmd
+          * >whoami = username
+          * > wmic usercaccount where name="username" get sid = sid of the current user
+          * then stablish C:\$Recycle.Bin\userSID as trash location, if it exists, if it doesnt, then prompt the user to stablish the location of their recycle bin
+          * but if they dont want, warn the user that any deletion done in the app is permanent and irreversible
+          */
           break;
         case '1':
         if(keyevent.ctrlKey & keyevent.shiftKey){
@@ -357,8 +383,27 @@ export default {
       inputField.classList.add('hidden')
       this.tempFileName = null
     },
-    
+    getWinBinDir(){
+      let binDir = 'C:\\$Recycle.Bin\\'
+      let username = null
+      let userSID = null
 
+      this.execute('whoami', (output) => {
+        username = output.split('\\')[1]
+        username = username.split('\r\n')[0]
+    
+        this.execute(`wmic useraccount where name="${username}" get sid`, (out) => {
+          userSID = out.split('\r\r\n')[1]
+        })
+      });
+
+      return binDir += userSID
+    },
+    ipcHandle(){
+      //window.electron.ipcRenderer.invoke('ping')
+      console.log(window.myApi.test()); 
+      console.log(window);
+    },
   },
   watch:{
   },
@@ -383,6 +428,62 @@ export default {
     document.addEventListener('keydown', (e)=>{
       this.shortcutManager(e)
     })
+
+    this.recycleBinDir = this.getWinBinDir()
+
+    /* if(!await settings.get('homeDir')){
+      await settings.set('homeDir', this.homeDir)
+    }
+
+    if(!await settings.get('recycleDir')){
+
+      switch (process.platform) {
+        case 'win32':
+          await settings.set('recycleDir', this.getWinBinDir())
+          break;
+      
+        default:
+          break;
+      }
+    }else{
+      this.recycleBinDir = await settings.get('recycleDir')
+    } 
+
+    console.log(this.recycleBinDir);*/
+    //! CON ESTO ES QUE TERMINO LO DE GUARDAR EL DIRECTORIO DE LA PAPELERA DE RECICLAJE PARA BORRAR COSAS NO PERMANENTEMENTE, GET THE PATH THEN SAVE IT IN SETTINGS
+
+    /* fs.access(path.join(__dirname,'config.json'), fs.constants.R_OK, (err) => {
+      console.log('\n> Checking Permission for reading the file');
+      if (err)
+        console.error('No Read access');
+      else
+        console.log('File can be read');
+    }); */
+
+    /* console.log(__dirname);
+    fs.readFile(path.join(__dirname,'config.json'), 'utf8', (err,data) => {
+      if(err) console.log(err);
+
+      let configs = JSON.parse(data)
+
+      if(configs.recycleBinDir == '' || configs.recycleBinDir == null){
+        
+        let username = null
+        this.execute('whoami', (output) => {
+          username = output.split('\\')[1]
+          username = username.split('\r\n')[0]
+      
+          this.execute(`wmic useraccount where name="${username}" get sid`, (out) => {
+            binDir += out.split('\r\r\n')[1]
+          })
+        });
+        configs.recycleBinDir = binDir
+        let json = JSON.stringify(configs)
+        fs.writeFile('./config.json', json, 'utf8', (err)=>{
+          if(err) console.log(err);
+        })
+      }
+    }) */
 
   },
   beforeUnmount(){

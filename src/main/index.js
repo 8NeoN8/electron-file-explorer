@@ -43,6 +43,9 @@ function createWindow() {
   }
 }
 
+function ipcCommand(){
+  return 'funciona el ipc de mierda'
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -58,7 +61,9 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('ipcTest', () => ipcCommand())
+  //ipcMain.handle('ping', () => ipcCommand())
+
 
   createWindow()
 
