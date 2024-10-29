@@ -2,6 +2,14 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+const fs = require('fs');
+const path = require('path');
+//const exec = require('child_process').exec;
+const homedir = require('os').homedir();
+const homeDirDesktop = join(homedir, 'Escritorio')
+
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 require('@electron/remote/main').initialize()
 
@@ -44,8 +52,98 @@ function createWindow() {
 }
 
 function ipcCommand(){
-  return 'funciona el ipc de mierda'
+  console.log(app.getPath('userData'));
 }
+
+function execute(command, callback) {
+  exec(command, (error, stdout, stderr) => { 
+      if(error) console.log(error);
+      callback(stdout); 
+  });
+}
+
+async function runCmd(command) {
+  const { stdout, stderr } = await exec(command);
+  return stdout
+}
+
+async function getWinBinDir(){
+  //const baseDir = 'C:\\$Recycle.Bin\\'
+  //let binLocation = null
+
+  let user = await runCmd('whoami')
+  user = user.split('\\')[1].replaceAll(/\s/g,'')
+
+  let userSID = await runCmd(`wmic useraccount where name="${user}" get sid`)
+  userSID = userSID.split('\r\r\n')[1].replaceAll(/\s/g,'').replaceAll(' ','')
+
+  let binLocation = `C:\\$Recycle.Bin\\${userSID}`
+
+  console.log(binLocation);
+
+  return binLocation
+
+  /* let user = execute('whoami', (output) => {
+    console.log('Output>>: ',output);
+    return output
+  }) */
+
+  /* execute('whoami', (output) => {
+    let user =  output.split('\\')[1]
+    user = user.replaceAll(/\s/g,'')
+    //console.log(user);
+
+    binLocation = execute(`wmic useraccount where name="${user}" get sid`, (output) => {
+      console.log(user,'inside sid req');
+      let winSID = output.split('\r\r\n')[1]
+      userSID = winSID
+      return `C:\\$Recycle.Bin\\${userSID}`
+    })
+    
+    console.log(binLocation,'before return');
+    return binLocation
+  }); */
+  
+}
+
+async function getConfigs(){
+  const binDir = await getWinBinDir() //* this should be os specific, change that later
+
+  //console.log(path.join(app.getPath('userData'),'config.json'));
+
+  fs.readFile(path.join(app.getPath('userData'),'config.json'), 'utf8', (err, data) => {
+    if (err?.code == 'ENOENT') {
+
+      let autoConfigs = {
+        homeDirectory: homeDirDesktop,
+        recycleBinDir: binDir
+      }
+      console.log(autoConfigs,'en la primera definicion!!!!!');
+      let jsonConfigs = JSON.stringify(autoConfigs)
+
+      fs.writeFile(path.join(app.getPath('userData'),'config.json'), jsonConfigs, 'utf8', (err) => {
+        if(err) console.error(err);
+      })
+      getConfigs()
+      return
+      
+    }
+    
+    let configs = JSON.parse(data)
+
+    if(configs.recycleBinDir == '' || configs.recycleBinDir == null || !configs.recycleBinDir){
+    
+      configs.recycleBinDir = binDir
+
+      let json = JSON.stringify(configs)
+
+      fs.writeFile(path.join(app.getPath('userData'),'config.json'), json, 'utf8', (err) => {
+        if(err) console.error(err);
+      })
+    }
+  })
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -61,7 +159,7 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.handle('ipcTest', () => ipcCommand())
+  ipcMain.handle('ipcTest', () => getConfigs())
   //ipcMain.handle('ping', () => ipcCommand())
 
 

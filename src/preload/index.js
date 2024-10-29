@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
-const myApi = {
+const api = {
   test: () => electronAPI.ipcRenderer.invoke('ipcTest') 
 }
 
@@ -12,7 +12,7 @@ const myApi = {
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI.ipcRenderer)
-    contextBridge.exposeInMainWorld('myApi', myApi)
+    contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }

@@ -309,6 +309,7 @@ export default {
         this.tabManager[0].focus()
       }
     },
+    
     //! AGREGAR MENSAJE DE ERROR POR AHORA SOLO NO TE DEJA CREAR EL ARCHIVO / DIRECTORIO
     createFileOrDirectory(inputName){
       
@@ -356,7 +357,9 @@ export default {
       this.fileList = this.getDirInfo(this.currentDir)
 
     },
+
     //! AGREGAR MENSAJE DE ERROR POR AHORA SOLO NO TE DEJA CREAR EL ARCHIVO / DIRECTORIO
+
     validateFileInput(){
       
       
@@ -399,10 +402,9 @@ export default {
 
       return binDir += userSID
     },
-    ipcHandle(){
+    async ipcHandle(){
       //window.electron.ipcRenderer.invoke('ping')
-      console.log(window.myApi.test()); 
-      console.log(window);
+      await window.api.test()
     },
   },
   watch:{
