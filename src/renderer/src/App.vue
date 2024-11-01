@@ -1,22 +1,6 @@
 <template>
-  <!-- <img alt="logo" class="logo" src="./assets/electron.svg" />
-  <div class="creator">Powered by electron-vite</div>
-  <div class="text">
-    Build an Electron app with
-    <span class="vue">Vue</span>
-  </div>
-  <p class="tip">Please try pressing <code>F12</code> to open the devTool</p>
-  <div class="actions">
-    <div class="action">
-      <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">Documentation</a>
-    </div>
-    <div class="action">
-      <a target="_blank" rel="noreferrer" @click="ipcHandle">Send IPC</a>
-    </div>
-  </div> -->
-
   <main class="main-container">
-    <NavBar :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event" @click="ipcHandle()"></NavBar>
+    <NavBar :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event" @click="IPC_GetConfig()"></NavBar>
 
     <div class="content-container">
       <button v-if="false" @click="changeHomeDir()"> change home directory </button>
@@ -74,7 +58,7 @@ export default {
     return {
       homeDir: config.homeDirectory,
       currentDir: config.homeDirectory,
-      appConfig: config,
+      appConfig: null,
       fileList: [],
       dirHistory: [],
       historyIndex: 0,
@@ -402,9 +386,11 @@ export default {
 
       return binDir += userSID
     },
-    async ipcHandle(){
-      //window.electron.ipcRenderer.invoke('ping')
-      await window.api.test()
+    async IPC_GetConfig(){
+      if(this.appConfig == '' || this.appConfig == null || this.appConfig == undefined){
+        this.appConfig = await window.api.getConfiguration()
+      }
+      
     },
   },
   watch:{
@@ -413,7 +399,7 @@ export default {
     this.fileList = this.getDirInfo(this.homeDir)
     this.dirHistory.push(this.homeDir)
   },
-  mounted() {
+  async mounted() {
     document.addEventListener('mouseup', (e) => {
       switch (e.button) {
         case 3:
@@ -430,65 +416,8 @@ export default {
     document.addEventListener('keydown', (e)=>{
       this.shortcutManager(e)
     })
-
-    this.recycleBinDir = this.getWinBinDir()
-
-    /* if(!await settings.get('homeDir')){
-      await settings.set('homeDir', this.homeDir)
-    }
-
-    if(!await settings.get('recycleDir')){
-
-      switch (process.platform) {
-        case 'win32':
-          await settings.set('recycleDir', this.getWinBinDir())
-          break;
-      
-        default:
-          break;
-      }
-    }else{
-      this.recycleBinDir = await settings.get('recycleDir')
-    } 
-
-    console.log(this.recycleBinDir);*/
-    //! CON ESTO ES QUE TERMINO LO DE GUARDAR EL DIRECTORIO DE LA PAPELERA DE RECICLAJE PARA BORRAR COSAS NO PERMANENTEMENTE, GET THE PATH THEN SAVE IT IN SETTINGS
-
-    /* fs.access(path.join(__dirname,'config.json'), fs.constants.R_OK, (err) => {
-      console.log('\n> Checking Permission for reading the file');
-      if (err)
-        console.error('No Read access');
-      else
-        console.log('File can be read');
-    }); */
-
-    /* console.log(__dirname);
-    fs.readFile(path.join(__dirname,'config.json'), 'utf8', (err,data) => {
-      if(err) console.log(err);
-
-      let configs = JSON.parse(data)
-
-      if(configs.recycleBinDir == '' || configs.recycleBinDir == null){
-        
-        let username = null
-        this.execute('whoami', (output) => {
-          username = output.split('\\')[1]
-          username = username.split('\r\n')[0]
-      
-          this.execute(`wmic useraccount where name="${username}" get sid`, (out) => {
-            binDir += out.split('\r\r\n')[1]
-          })
-        });
-        configs.recycleBinDir = binDir
-        let json = JSON.stringify(configs)
-        fs.writeFile('./config.json', json, 'utf8', (err)=>{
-          if(err) console.log(err);
-        })
-      }
-    }) */
-
-  },
-  beforeUnmount(){
+    
+    await this.IPC_GetConfig()
   },
 }
 </script>

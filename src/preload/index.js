@@ -1,9 +1,9 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge} from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  test: () => electronAPI.ipcRenderer.invoke('ipcTest') 
+  getConfiguration: () => electronAPI.ipcRenderer.invoke('IPC_GetConfig') 
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -11,7 +11,7 @@ const api = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI.ipcRenderer)
+    contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
