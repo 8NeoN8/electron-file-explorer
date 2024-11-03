@@ -19,6 +19,8 @@ function createWindow() {
     height: 670,
     show: false,
     autoHideMenuBar: true,
+    minWidth: 750,
+    minHeight: 450,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -99,9 +101,72 @@ async function checkConfig(){
 }
 
 function getConfigs(){
-  appConfig = fs.readFileSync(configFileRoute, 'utf8')
+  appConfig = JSON.parse(fs.readFileSync(configFileRoute, 'utf8'))
 }
 
+async function setHomeDir(homeDir){
+  let config = null
+  fs.readFile(configFileRoute, 'utf8', (err, data) => {
+    config = JSON.parse(data)
+    config.homeDirectory = homeDir
+
+    config = JSON.stringify(config)
+
+    fs.writeFile(configFileRoute, config, 'utf-8',(err) => console.log(err))
+  })
+
+}
+async function sendToTrash(file){
+  await shell.trashItem(file)
+}
+
+async function sendToFakeTrash(file){
+
+  const destination = join(appConfig.recycleBinDir, file.split('\\')[1])
+
+  fs.copyFile(file, destination, (err) => {
+    if(err) console.log('Error Moving file>>: ', err);
+  })
+  await removeOriginalForCopy(file)
+}
+
+async function removeOriginalForCopy(file){
+  if(fs.statSync(file).isDirectory()){
+    fs.rmdir(file, (err) => {
+      if(err) console.log('Error at original dir deletion>>: ', err);
+    })
+    return
+  }
+
+  fs.rm(file, (err) => {
+    if(err) console.log('Error at original file deletion>>: ', err);
+  })
+}
+
+async function deleteRecursiveDir(dir){
+  let dirInfo = fs.readdirSync(dir).map(file => {
+    let fullFile = {}
+    let filepath = join(dir, file)
+    fullFile.filePath = filepath
+    fullFile.fileName = file
+    return fullFile
+  })
+
+  dirInfo = dirInfo.filter(file => !file.fileName.includes('$') && !file.fileName.includes('desktop.ini'))
+
+  dirInfo.forEach(dirOrFile => {
+    if(fs.statSync(dirOrFile.filePath).isDirectory()){
+      deleteRecursiveDir(dirOrFile.filePath)
+    }else{
+      console.log('Deleting file... ', dirOrFile.filePath);
+      fs.rm(dirOrFile.filePath, (err) => {
+        if(err) console.log('error borrando archivo>>: ',err);
+      })
+      console.log('archivo borrado>>: ', dirOrFile.fileName);
+    }
+
+  });
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -120,6 +185,17 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.handle('IPC_GetConfig', () => {
     return appConfig
+  })
+  ipcMain.handle('IPC_SetHomeDir', (event, data) => {
+    setHomeDir(data)
+  })
+
+  ipcMain.handle('IPC_SendToTrash', (event, data) => {
+    sendToFakeTrash(data)
+  })
+
+  ipcMain.handle('IPC_ClearTrash', () => {
+    deleteRecursiveDir(appConfig.recycleBinDir)
   })
 
   checkConfig()

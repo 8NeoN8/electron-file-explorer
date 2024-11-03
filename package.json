@@ -21,7 +21,10 @@
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "@electron/remote": "^2.1.2",
+    "date-fns": "^4.1.0",
     "electron-updater": "^6.1.7",
+    "mime-types": "^2.1.35",
+    "move-file": "^3.1.0",
     "trash": "^9.0.0"
   },
   "devDependencies": {

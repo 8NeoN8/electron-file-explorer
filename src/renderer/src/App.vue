@@ -1,34 +1,82 @@
 <template>
   <main class="main-container">
-    <NavBar :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event" @click="IPC_GetConfig()"></NavBar>
+    <NavBar v-if="true" :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event"></NavBar>
 
     <div class="content-container">
-      <button v-if="false" @click="changeHomeDir()"> change home directory </button>
   
-      <ul class="file-list" id="file-list">
-        <template v-for="(file, index) in fileList" :key="index">
-          <li tabindex="0" @focus="tabManaging($event),this.componentFocus = 'list'" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)" @keyup.enter="openFileOrDir(file)">
-            <div class="file-name">
-              {{ file.filename }}
-            </div>
-            <div v-if="!file.isDir" class="file-size">
-              {{ file.size }}
-            </div>
-          </li>
-        </template>
+      <ul v-if="fileList" class="file-list" id="file-list">
+        <li class="file-item" id="file-list-column-headers">
+          <div class="file-name file-item-header">
+            Name
+          </div>
+          <div class="file-create-date file-item-header">
+            CreationDate
+          </div>
+
+          <div class="file-type file-item-header">
+            Type
+          </div>
+          <div class="file-size file-item-header">
+            Size
+          </div>
+        </li>
+
         <li class="file-item hidden" id="temp-file-name">
           <input type="text" id="temp-input" @blur="hideInput()" @keypress.enter="createFileOrDirectory(tempFileName)" @input="validateFileInput()" v-model="tempFileName">
         </li>
+        
+        <template v-for="(file, index) in fileList" :key="index">
+
+          <li tabindex="0" @focus="tabManaging($event, file),this.componentFocus = 'list'" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)" @keyup.enter="openFileOrDir(file)">
+            <div class="file-name file-item-component">
+              {{ file.fileName }}
+            </div>
+            <div class="file-create-date file-item-component">
+              {{ file.birthtime }}
+            </div>
+
+            <div class="file-type file-item-component">
+              {{ file.isDir ? 'Folder' : 'File' }}
+            </div>
+            <div class="file-size file-item-component">
+              {{ file.size ? `${file.size} KB` : '' }}
+            </div>
+          </li>
+
+        </template>
+
       </ul>
 
+      <div v-if="fileList.length == 0 && !appConfig.homeDirectory" class="prompt-home-dir">
+        <h1 class="explorer-title">NeoN Explorer</h1>
+        <p class="explorer-description">
+          Simple file explorer made with electron, visit the <a href="#">github</a> to know more!
+        </p>
+
+        <div class="set-home-dir-call">
+          Click <a href="#" class="change-home-dir-link" @click="changeHomeDir()">here</a> to set the home directory the app will open on
+        </div>
+
+      </div>
+
       <div class="route-history">
-        <!-- {{ this.dirHistory }} -->
+
+        {{ dirHistory }}
 
         <div class="buttons">
           <button class="prev" @click="backHistory()">back</button>
           &nbsp;&nbsp;&nbsp;&nbsp;
           <button class="next" @click="forwardHistory()">forth</button>
+          <br>
+          <button @click="changeHomeDir()"> Change home dir</button>
+          <br>
+          <button @click="isDialogOpen = !isDialogOpen">pruab dialog</button>
+          <br>
+          <button @click="openBin(); manageHistory(appConfig.recycleBinDir)">Open recyclebin</button>
+          <br>
+          <button @click="clearFakeTrash()">Clear recycle bin</button>
         </div>
+
       </div>
 
     </div>
@@ -38,16 +86,18 @@
 
       <h3>Estas seguro que quieres enviar a la papelera?</h3>
       <div class="dialog-buttons" style="display: flex; width: 100%; justify-content: space-around;">
-        <button class="confirm-deletion">Si</button>
-        <button class="cancel-deletion">No</button>
+        <button class="confirm-deletion" @click="IPC_SendToTrash(focusFile)">Si</button>
+        <button class="cancel-deletion" @click="isDialogOpen = !isDialogOpen">No</button>
       </div>
+
     </dialog>
+
   </main>
 </template>
 
 <script>
 import NavBar from './components/NavBar.vue';
-import config from './config.json';
+import { format } from 'date-fns';
 const remote = require('@electron/remote');
 const fs = require('fs');
 const path = require('path');
@@ -56,9 +106,8 @@ const exec = require('child_process').exec;
 export default {
   data() {
     return {
-      homeDir: config.homeDirectory,
-      currentDir: config.homeDirectory,
-      appConfig: null,
+      currentDir: null,
+      appConfig: {},
       fileList: [],
       dirHistory: [],
       historyIndex: 0,
@@ -70,12 +119,11 @@ export default {
       isTempNameValid: true,
       isDialogOpen: false,
       recycleBinDir: null,
+      focusFile: null
     }
   },
   components:{
     NavBar,
-  },
-  computed: {
   },
   methods: {
     execute(command, callback) {
@@ -84,30 +132,85 @@ export default {
           callback(stdout); 
       });
     },
-    async changeHomeDir(){
-      let homePath = (await remote.dialog.showOpenDialog({properties: ['openDirectory', 'singleSelection']}))
-      if(homePath.filePaths[0]) this.homeDir = homePath.filePaths[0]
-      this.fileList = this.getDirInfo(this.homeDir)
+
+    async IPC_GetConfig(){
+      this.appConfig = await window.api.getConfiguration()
     },
+
+    async changeHomeDir(){
+
+      const selectPath = await remote.dialog.showOpenDialog({properties: ['openDirectory', 'singleSelection']})
+      const homeDirectory = selectPath.filePaths[0]
+
+      if(homeDirectory){
+        this.fileList = this.getDirInfo(homeDirectory)
+        this.IPC_ChangeHomeDirectory(homeDirectory)
+        this.currentDir = homeDirectory
+        this.IPC_GetConfig()
+      }
+
+    },
+
+    async IPC_ChangeHomeDirectory(homeDirectory){
+      await window.api.setHomeDirectory(homeDirectory)
+    },
+
+    async clearFakeTrash(){
+      await window.api.clearTrash()
+    },
+
+    openBin(){
+      //S-1-5-21-474367234-958375406-904006301-1001
+      const pruebas = 'D:\\MIS_NUEVOS_ARCHIVOS\\PRUEBAS_DEL_EXPLORER'
+      const bin = 'C:\\$Recycle.Bin\\S-1-5-21-474367234-958375406-904006301-1001'
+      let binFiles = this.getDirInfo(bin)
+
+      let realFiles = []
+
+      binFiles.forEach(file => {
+        if(!file.fileName.includes('$') && !file.fileName.includes('desktop.ini')){
+
+          const destination = path.join(pruebas, file.fileName)
+
+          fs.copyFile(file.filePath, destination, (err) => {
+            if(err) console.log('Error Moving file>>: ', err);
+          })
+
+          return realFiles.push(file)
+        }
+      })
+      this.fileList = realFiles
+
+      
+    },
+
     getDirInfo(dir){
       if(dir){
-        let filelist = []
-        fs.readdirSync(dir).forEach(file => {
-          let fileDir = path.join(dir,file)
-          let fileStats = fs.statSync(fileDir)
-          fileStats.filename = file
-          fileStats.path = dir + '\\' + file
-          filelist.push(fileStats)
-          if(fs.statSync(fileDir).isDirectory()){
-            fileStats.isDir = true
-          }else fileStats.isDir = false
-          fileStats.size =  Math.round(fileStats.size / 1024) + ' KB'
+        let files = fs.readdirSync(dir).map(file => {
+
+          let filePath = path.join(dir,file)
+          let fileInfo = fs.statSync(filePath)
+
+          fileInfo.fileName = file
+          fileInfo.filePath = filePath
+
+          fs.statSync(filePath).isDirectory() ? fileInfo.isDir = true : fileInfo.isDir = false
+
+          
+          fileInfo.size =  Math.round(fileInfo.size / 1024)
+
+          fileInfo.birthtime = format(fileInfo.birthtime, "dd/MM/yyyy")
+
+          return fileInfo
         })
-        filelist = filelist.reverse()
+
+        files = files.sort((a, b) => b.isDir - a.isDir)
+        
         this.currentDir = dir
-        return filelist
+        return files
       }
     },
+
     manageHistory(dir){
 
       if(this.dirHistory[this.historyIndex+1]){
@@ -117,6 +220,7 @@ export default {
       this.dirHistory.push(dir)
       this.historyIndex++
     },
+
     backHistory(){
 
       if(this.historyIndex > 0){
@@ -124,6 +228,7 @@ export default {
         this.fileList = this.getDirInfo(this.dirHistory[this.historyIndex])
       }
     },
+
     forwardHistory(){
 
       if(this.dirHistory[this.historyIndex+1]){
@@ -131,20 +236,22 @@ export default {
         this.fileList = this.getDirInfo(this.dirHistory[this.historyIndex])
       }
     },
+
     openFileOrDir(fileOrDir){
-      let isDir = fs.statSync(fileOrDir.path).isDirectory()
+      let isDir = fs.statSync(fileOrDir.filePath).isDirectory()
       if(isDir){
-        this.fileList = this.getDirInfo(fileOrDir.path)
-        this.manageHistory(fileOrDir.path)
+        this.fileList = this.getDirInfo(fileOrDir.filePath)
+        this.manageHistory(fileOrDir.filePath)
         this.tabManager[0].focus()
 
       }
 
       if(!isDir){
-        exec(this.getCommandLine() + ' ' + fileOrDir.path)
+        exec(this.getCommandLine() + ' ' + fileOrDir.filePath)
       }
 
     },
+
     getCommandLine(){
       switch (process.platform) {
         case 'darwin': 
@@ -157,10 +264,23 @@ export default {
           return 'xdg-open';
       }
     },
-    tabManaging(tab){
+
+    tabManaging(tab, file){
       this.tabManager = Array.from(document.getElementsByClassName('file-item'))
       this.focusTab = tab.srcElement
+      this.focusFile = file
     },
+
+    async IPC_SendToTrash(file){
+      //'D:\\MIS_NUEVOS_ARCHIVOS\\prueba recycle bin 2'
+      console.log(file);
+
+      await window.api.sendToTrash(file.filePath)
+      this.isDialogOpen = false
+      this.focusFile = null
+      this.fileList = this.getDirInfo(this.currentDir)
+    },
+
     shortcutManager(keyevent){
       let taberIndex = this.tabManager.indexOf(this.focusTab)
       //console.log(keyevent);  
@@ -236,9 +356,12 @@ export default {
             }
           }
           break;
-        case 'D':
+        case 'd':
           //* confirmation dialog for deletion
-          this.isDialogOpen = true
+          if(keyevent.ctrlKey){
+            console.log('asdjkfnhalsdf');
+            this.isDialogOpen = true
+          }
 
           //* MY recycle bin location C:\$Recycle.Bin\S-1-5-21-474367234-958375406-904006301-1001
           /*
@@ -269,18 +392,23 @@ export default {
       }
       
     },
+
     controlPanel(){
 
     },
+
     searchGlobalPanel(){
 
     },
+
     openThisFile(){
 
     },
+
     sortSearchCurrentFiles(){
 
     },
+
     focusAppComponent(component){
 
       if(component == 0){
@@ -365,11 +493,13 @@ export default {
       }
       
     },
+
     hideInput(){
       let inputField = document.getElementById('temp-file-name')
       inputField.classList.add('hidden')
       this.tempFileName = null
     },
+
     getWinBinDir(){
       let binDir = 'C:\\$Recycle.Bin\\'
       let username = null
@@ -386,18 +516,16 @@ export default {
 
       return binDir += userSID
     },
-    async IPC_GetConfig(){
-      if(this.appConfig == '' || this.appConfig == null || this.appConfig == undefined){
-        this.appConfig = await window.api.getConfiguration()
-      }
-      
-    },
   },
   watch:{
   },
-  created() {
-    this.fileList = this.getDirInfo(this.homeDir)
-    this.dirHistory.push(this.homeDir)
+  async created() {
+    await this.IPC_GetConfig()
+
+    if(this.appConfig?.homeDirectory){
+      this.fileList = this.getDirInfo(this.appConfig.homeDirectory)
+      this.dirHistory.push(this.appConfig.homeDirectory)
+    }
   },
   async mounted() {
     document.addEventListener('mouseup', (e) => {
@@ -416,8 +544,6 @@ export default {
     document.addEventListener('keydown', (e)=>{
       this.shortcutManager(e)
     })
-    
-    await this.IPC_GetConfig()
   },
 }
 </script>

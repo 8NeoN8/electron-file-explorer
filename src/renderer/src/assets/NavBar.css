@@ -1,0 +1,20 @@
+/** Nav Bar */
+
+.nav-bar{
+  width: 100%;
+  height: 1.2rem;
+  background-color: var(--font-green);
+}
+
+.not-focus-bar{
+  color: var(--dark-space);
+  height: 100%;
+  vertical-align: middle;
+
+}
+
+.focus-bar{
+
+}
+
+/** Nav Bar */

@@ -1,3 +1,11 @@
+:root{
+  font-size: 16px;
+  font-family: monospace;
+  --font-green: rgb(71, 219, 71);
+  --dark-space: rgb(26, 25, 28);
+  --light-dark-space: rgb(40, 40, 45);
+}
+
 *{
   box-sizing: border-box;
   position: relative;
@@ -6,40 +14,72 @@
 }
 
 .main-container{
-  background-color: azure;
+  background-color: whitesmoke /* var(--dark-space) */;
   width: 100vw;
   height: 100vh;
-  gap: 3rem;
+  cursor: default;
 }
 
 .content-container{
-  background-color: bisque;
-  height: calc(100% - 1.5rem);
+  height: calc(100% - 1.2rem);
+  background-color: var(--light-dark-space);
+  overflow-y: auto;
 }
+
+/** Element when no home dir has been set */
+
+.prompt-home-dir{
+  text-align: center;
+  padding: 1rem;
+  background-color: var(--light-dark-space);
+}
+
+/** Elements when no home dir has been set */
+
+/** File List elements */
 
 .file-list{
   list-style: none;
-  background-color: lightblue;
-  padding: 0 2rem;
+  background-color: var(--light-dark-space);
+  background-color: red;
+  height: fit-content;
+  color: var(--font-green);
 }
 
+
 .file-item{
-  background-color: lightcoral;
+  background-color: var(--dark-space);
   display: flex;
   justify-content: space-between;
 }
 
 .file-item:focus{
-  background-color: green;
+  background-color: var(--light-dark-space);
+  outline: none;
 }
 
+.file-item-component{
+  border-right: 1px solid var(--font-green);
+  width: 20%;
+  padding: 0.1rem 0.3rem;
+  padding-right: 0.5rem;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+}
 
-.nav-bar{
-  width: 100%;
-  background-color: blueviolet;
-  color: white;
-  text-align: center;
-  height: 1.5rem;
+.file-size{
+  text-align: right;
+}
+
+.file-item-header{
+  border-right: 1px solid var(--font-green);
+  width: 20%;
+  padding: 0.2rem 0.3rem;
+  text-align: left;
+}
+
+.file-name{
+  width: 40%;
 }
 
 .focus-input{
@@ -49,3 +89,5 @@
 .hidden{
   display: none;
 }
+
+/** File List elements */ 

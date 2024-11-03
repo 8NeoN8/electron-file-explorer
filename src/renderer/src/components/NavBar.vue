@@ -68,5 +68,5 @@ export default {
 </script>
 
 <style>
-
+@import '../assets/NavBar.css';
 </style>
