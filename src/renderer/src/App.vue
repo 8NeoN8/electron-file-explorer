@@ -1,6 +1,6 @@
 <template>
   <main class="main-container">
-    <NavBar v-if="true" :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event)" @setFocus="this.componentFocus = $event"></NavBar>
+    <NavBar v-if="true" :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event), dirHistory.push($event)" @setFocus="this.componentFocus = $event"></NavBar>
 
     <div class="content-container">
   
@@ -61,7 +61,9 @@
 
       <div class="route-history">
 
-        {{ dirHistory }}
+        <div style="color: white;">
+          {{ dirHistory }}
+        </div>
 
         <div class="buttons">
           <button class="prev" @click="backHistory()">back</button>
@@ -86,7 +88,7 @@
 
       <h3>Estas seguro que quieres enviar a la papelera?</h3>
       <div class="dialog-buttons" style="display: flex; width: 100%; justify-content: space-around;">
-        <button class="confirm-deletion" @click="IPC_SendToTrash(focusFile)">Si</button>
+        <button class="confirm-deletion" @click="IPC_SendToTrash(focusFile);reloadDir()">Si</button>
         <button class="cancel-deletion" @click="isDialogOpen = !isDialogOpen">No</button>
       </div>
 
@@ -119,19 +121,14 @@ export default {
       isTempNameValid: true,
       isDialogOpen: false,
       recycleBinDir: null,
-      focusFile: null
+      focusFile: null,
+      singleCopyFile: null
     }
   },
   components:{
     NavBar,
   },
   methods: {
-    execute(command, callback) {
-      exec(command, (error, stdout, stderr) => { 
-          if(error) console.log(error);
-          callback(stdout); 
-      });
-    },
 
     async IPC_GetConfig(){
       this.appConfig = await window.api.getConfiguration()
@@ -207,6 +204,7 @@ export default {
         files = files.sort((a, b) => b.isDir - a.isDir)
         
         this.currentDir = dir
+
         return files
       }
     },
@@ -273,7 +271,6 @@ export default {
 
     async IPC_SendToTrash(file){
       //'D:\\MIS_NUEVOS_ARCHIVOS\\prueba recycle bin 2'
-      console.log(file);
 
       await window.api.sendToTrash(file.filePath)
       this.isDialogOpen = false
@@ -281,109 +278,133 @@ export default {
       this.fileList = this.getDirInfo(this.currentDir)
     },
 
-    shortcutManager(keyevent){
+    shortcutManager(keyEvent){
+
+      //* MY recycle bin location C:\$Recycle.Bin\S-1-5-21-474367234-958375406-904006301-1001
+      /*
+      *pasos para conseguir la ruta dinamicamente, en cmd
+      * >whoami = username
+      * > wmic usercaccount where name="username" get sid = sid of the current user
+      * then stablish C:\$Recycle.Bin\userSID as trash location, if it exists, if it doesnt, then prompt the user to stablish the location of their recycle bin
+      * but if they dont want, warn the user that any deletion done in the app is permanent and irreversible
+      */
+     const file_list = Array.from(document.querySelectorAll('.file-item'))
+     this.tabManager = file_list
+
       let taberIndex = this.tabManager.indexOf(this.focusTab)
-      //console.log(keyevent);  
-      switch (keyevent.key) {
-        case 'Backspace':
+
+
+      //console.log(keyEvent);  
+
+      switch (keyEvent.key.toLowerCase()) {
+        case 'backspace':
           this.backHistory()  
           break;
-        case 'ArrowDown':
+        case 'arrowdown':
+          if(!this.focusTab && !this.focusFile){
+            file_list[2].focus()
+          }
           if(this.tabManager[taberIndex+1]){
             this.tabManager[taberIndex+1].focus()
           }
+          if(taberIndex == this.tabManager.length-1){
+            file_list[2].focus()
+          }
           break;
-        case 'ArrowUp':
+        case 'arrowup':
           if(taberIndex > 0){
             this.tabManager[taberIndex-1].focus()
           }
+          if(taberIndex == 2){            
+            file_list[file_list.length-1].focus()
+          }
           break;
-        case 'P':
-          if (keyevent.ctrlKey) {
-            this.controlPanel()
+        case 'p':
+          if (keyEvent.ctrlKey) {
+            //*this.controlPanel()
           }
 
-          if (keyevent.ctrlKey && keyevent.altKey) {
+          if (keyEvent.ctrlKey && keyEvent.altKey) {
             //*if global search open, select to search for date
 
             //*if file list search open, select to search for date too, it is a different target after all
           }
           
           break;
-        case 'F':
-          if (keyevent.ctrlKey) {
-            this.searchGlobalPanel()
+        case 'f':
+          if (keyEvent.ctrlKey) {
+            //*this.searchGlobalPanel()
           }
           break;
-        case 'G':
-          if (keyevent.ctrlKey) {
-            this.openThisFile()
+        case 'g':
+          if (keyEvent.ctrlKey) {
+            //*this.openThisFile()
           }
           break;
-        case 'L':
-          if (keyevent.ctrlKey) {
-            this.sortSearchCurrentFiles()
+        case 'l':
+          if (keyEvent.ctrlKey) {
+            //*this.sortSearchCurrentFiles()
           }
-          if (keyevent.ctrlKey && keyevent.shiftKey) {
+          if (keyEvent.ctrlKey && keyEvent.shiftKey) {
             this.forwardHistory()
           }
           break;
-        case 'H':
-          if (keyevent.ctrlKey && keyevent.shiftKey) {
+        case 'h':
+          if (keyEvent.ctrlKey && keyEvent.shiftKey) {
             this.openHistoryView()
           }
           break;
-        case 'J':
-          if (keyevent.ctrlKey && keyevent.shiftKey) {
+        case 'j':
+          if (keyEvent.ctrlKey && keyEvent.shiftKey) {
             this.backHistory()
           }
           break;
-        case 'I':
-          if (keyevent.altKey){
+        case 'i':
+          if (keyEvent.altKey){
 
           }
           break;
-        case 'O':
-          if (keyevent.altKey){
+        case 'o':
+          if (keyEvent.altKey){
 
           }
           break;
-        case 'N':
+        case 'n':
           if(this.componentFocus == 'list'){
-            if(keyevent.ctrlKey & keyevent.shiftKey){
+            if(keyEvent.ctrlKey & keyEvent.shiftKey){
               document.getElementById('temp-file-name').classList.remove('hidden')
               document.getElementById('temp-input').focus()
             }
           }
           break;
         case 'd':
-          //* confirmation dialog for deletion
-          if(keyevent.ctrlKey){
-            console.log('asdjkfnhalsdf');
+          if(keyEvent.ctrlKey && this.focusTab && this.focusFile){
             this.isDialogOpen = true
           }
-
-          //* MY recycle bin location C:\$Recycle.Bin\S-1-5-21-474367234-958375406-904006301-1001
-          /*
-          *pasos para conseguir la ruta dinamicamente, en cmd
-          * >whoami = username
-          * > wmic usercaccount where name="username" get sid = sid of the current user
-          * then stablish C:\$Recycle.Bin\userSID as trash location, if it exists, if it doesnt, then prompt the user to stablish the location of their recycle bin
-          * but if they dont want, warn the user that any deletion done in the app is permanent and irreversible
-          */
           break;
+        case 'c':
+          if(keyEvent.ctrlKey && this.focusTab && this.focusFile){
+            this.singleCopyFile = this.focusFile
+            console.log('file copied >>:', this.singleCopyFile);
+          }
+          break;
+        case 'v':
+          if(this.singleCopyFile){
+            this.copyFileTo(this.singleCopyFile, this.currentDir)
+          }
+        break;
         case '1':
-        if(keyevent.ctrlKey & keyevent.shiftKey){
+        if(keyEvent.ctrlKey){
           this.focusAppComponent(0)
         }
           break;
         case '2':
-        if(keyevent.ctrlKey & keyevent.shiftKey){
+        if(keyEvent.ctrlKey){
           this.focusAppComponent(1)
         }
           break;
         case '3':
-        if(keyevent.ctrlKey & keyevent.shiftKey){
+        if(keyEvent.ctrlKey){
           this.focusAppComponent(2)
         }
           break;
@@ -393,20 +414,27 @@ export default {
       
     },
 
-    controlPanel(){
-
+    reloadDir(){
+      this.fileList = ['']
+      this.fileList = this.getDirInfo(this.currentDir)
     },
 
-    searchGlobalPanel(){
 
+    copyFileTo(file, destination){
+      fs.copyFile(file.filePath, path.join(destination, file.fileName), fs.constants.COPYFILE_EXCL, (err) =>{
+        if(err) this.manageCopyError(err);
+
+        console.log('file copied to >>: ', path.join(destination, file.fileName));
+      })
+      this.reloadDir()
     },
 
-    openThisFile(){
-
-    },
-
-    sortSearchCurrentFiles(){
-
+    manageCopyError(err){
+      if(err){
+        console.log(err);
+        //* if error is already exists, prompt the user to 1) cancel de operation 2) copy but add a random set or chars to the copy's name 3) replace the file that already exists
+        //* if the error is anything else just show the error type and preview
+      }
     },
 
     focusAppComponent(component){
@@ -418,7 +446,8 @@ export default {
         NavBar.methods.focusbar()
       }
       if(component == 2){
-        this.tabManager[0].focus()
+        this.tabManager = Array.from(document.querySelectorAll('.file-item'))
+        this.tabManager[2].focus()
       }
     },
     
@@ -499,25 +528,14 @@ export default {
       inputField.classList.add('hidden')
       this.tempFileName = null
     },
-
-    getWinBinDir(){
-      let binDir = 'C:\\$Recycle.Bin\\'
-      let username = null
-      let userSID = null
-
-      this.execute('whoami', (output) => {
-        username = output.split('\\')[1]
-        username = username.split('\r\n')[0]
-    
-        this.execute(`wmic useraccount where name="${username}" get sid`, (out) => {
-          userSID = out.split('\r\r\n')[1]
-        })
-      });
-
-      return binDir += userSID
-    },
   },
   watch:{
+    'fileList':{
+      handler: function(newValue){
+        this.tabManager = Array.from(document.querySelectorAll('.file-item'))
+      },
+      deep: true
+    }
   },
   async created() {
     await this.IPC_GetConfig()
@@ -528,6 +546,9 @@ export default {
     }
   },
   async mounted() {
+
+    await this.IPC_GetConfig()
+
     document.addEventListener('mouseup', (e) => {
       switch (e.button) {
         case 3:
@@ -544,6 +565,12 @@ export default {
     document.addEventListener('keydown', (e)=>{
       this.shortcutManager(e)
     })
+
+    if(this.fileList.length > 2){
+      this.tabManager = Array.from(document.querySelectorAll('.file-item'))
+    }
+
+    this.currentDir = this.appConfig.homeDirectory
   },
 }
 </script>

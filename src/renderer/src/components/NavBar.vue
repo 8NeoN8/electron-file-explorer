@@ -20,13 +20,11 @@
 
 <script>
 const fs = require('fs');
-const path = require('path');
-import config from '../config.json'
 export default {
   name: 'NavBar',
   data() {
     return {
-      focusInput: this.currentDir,
+      focusInput: null,
     }
   },
   emits:['searchNewDir', 'setFocus'],
@@ -34,12 +32,15 @@ export default {
     directory(){
       if(!this.focusInput) return this.currentDir
       return this.focusInput
+    },
+    test(){
+      return this.currentDir
     }
   },
   props:{
     currentDir:{
       type: String,
-      default: config.homeDirectory
+      default: null
     }
   },
   methods: {
@@ -59,10 +60,25 @@ export default {
       document.getElementById('not-focus-bar').classList.remove('hidden')
     },
     focusbar(){
+      console.log(this.currentDir, this.focusInput);
       document.getElementById('not-focus-bar').classList.add('hidden')
       document.getElementById('focus-bar').classList.remove('hidden')
       document.getElementById('focus-input').focus()
     },
+  },
+  watch:{
+    'currentDir':{
+      handler: function (newValue){
+        this.focusInput = this.currentDir
+      },
+      deep:true
+    }
+  },
+  mounted() {
+    if(this.currentDir){
+      this.focusInput = this.currentDir
+      console.log(this.focusInput);
+    }
   },
 }
 </script>
