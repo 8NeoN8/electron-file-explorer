@@ -122,7 +122,8 @@ export default {
       isDialogOpen: false,
       recycleBinDir: null,
       focusFile: null,
-      singleCopyFile: null
+      singleCopyFile: null,
+      singleCutFile: null,
     }
   },
   components:{
@@ -392,7 +393,16 @@ export default {
           if(this.singleCopyFile){
             this.copyFileTo(this.singleCopyFile, this.currentDir)
           }
-        break;
+          if(this.singleCutFile){
+            this.cutFileTo(this.singleCutFile, this.currentDir)
+          }
+          break;
+        case 'x':
+          if(keyEvent.ctrlKey && this.focusTab && this.focusFile){
+            this.singleCutFile = this.focusFile
+            console.log('file cut >>:', this.singleCutFile);
+          }
+          break;
         case '1':
         if(keyEvent.ctrlKey){
           this.focusAppComponent(0)
@@ -427,6 +437,32 @@ export default {
         console.log('file copied to >>: ', path.join(destination, file.fileName));
       })
       this.reloadDir()
+    },
+    
+    cutFileTo(file, destination){
+      const newPath = path.join(destination, file.fileName)
+
+      fs.access(newPath, fs.constants.F_OK, (err) => {
+        if(err){
+          fs.rename(file.filePath, newPath, (err) =>{
+            if(err) console.log(err);
+          })
+          console.log('file cut and pasted');
+          this.reloadDir()
+        }
+
+        if(!err){
+          console.log('file already exists at directory>>: ', destination, ' do you want to override? ');
+          /*
+          fs.rename(file.filePath, newPath, (err) =>{
+            if(err) console.log(err);
+          })
+          this.reloadDir()
+          */
+        }
+      })
+
+
     },
 
     manageCopyError(err){
