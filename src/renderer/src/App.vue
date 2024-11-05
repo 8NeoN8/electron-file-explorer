@@ -27,8 +27,20 @@
         
         <template v-for="(file, index) in fileList" :key="index">
 
-          <li tabindex="0" @focus="tabManaging($event, file),this.componentFocus = 'list'" class="file-item" style="cursor: pointer;" @click="openFileOrDir(file)" @keyup.enter="openFileOrDir(file)">
-            <div class="file-name file-item-component">
+          <li 
+            tabindex="0" 
+            class="file-item" 
+            style="cursor: pointer;" 
+            @focus="tabManaging($event, file),this.componentFocus = 'list'" 
+            @click="openFileOrDir(file)" 
+            @keyup.enter.self="openFileOrDir(file)"
+          >
+
+            <div class="file-name file-item-component"
+              @keyup.enter="manageNameChange(focusFile, currentDir)"
+              @input="handleChangeNameInput($event)"
+              @blur="cancelNameChange()"
+            >
               {{ file.fileName }}
             </div>
             <div class="file-create-date file-item-component">
@@ -124,6 +136,8 @@ export default {
       focusFile: null,
       singleCopyFile: null,
       singleCutFile: null,
+      originalFileName: null,
+      fileChangeName: null,
     }
   },
   components:{
@@ -186,20 +200,18 @@ export default {
       if(dir){
         let files = fs.readdirSync(dir).map(file => {
 
-          let filePath = path.join(dir,file)
-          let fileInfo = fs.statSync(filePath)
+          const filePath = path.join(dir,file)
+          const fileInfo = fs.statSync(filePath)
 
-          fileInfo.fileName = file
-          fileInfo.filePath = filePath
+          const newFile = {
+            filePath: filePath,
+            fileName: file,
+            isDir: fs.statSync(filePath).isDirectory(),
+            size: Math.round(fileInfo.size / 1024),
+            birthtime: format(fileInfo.birthtime, "dd/MM/yyyy")
+          }
 
-          fs.statSync(filePath).isDirectory() ? fileInfo.isDir = true : fileInfo.isDir = false
-
-          
-          fileInfo.size =  Math.round(fileInfo.size / 1024)
-
-          fileInfo.birthtime = format(fileInfo.birthtime, "dd/MM/yyyy")
-
-          return fileInfo
+          return newFile
         })
 
         files = files.sort((a, b) => b.isDir - a.isDir)
@@ -293,7 +305,6 @@ export default {
      this.tabManager = file_list
 
       let taberIndex = this.tabManager.indexOf(this.focusTab)
-
 
       //console.log(keyEvent);  
 
@@ -403,6 +414,11 @@ export default {
             console.log('file cut >>:', this.singleCutFile);
           }
           break;
+        case 'f2':
+          if(this.focusTab && this.focusFile){
+            this.startRenameProcess()
+          }
+          break;
         case '1':
         if(keyEvent.ctrlKey){
           this.focusAppComponent(0)
@@ -424,6 +440,76 @@ export default {
       
     },
 
+    handleChangeNameInput(event){
+      let input = event.target.innerText
+      
+      
+      input = input.replace(/(\r\n|\n|\r)/gm, "")
+
+      
+      this.fileChangeName = input
+
+      console.log(input);
+
+      /* const fileNameField = Array.from(this.focusTab.getElementsByClassName('file-name'))[0]
+
+      event.target.innerText = input
+      console.log(fileNameField.innerText); */
+    },
+
+    startRenameProcess(){
+
+      //* Get the element with the text
+      let fileNameField = Array.from(this.focusTab.getElementsByClassName('file-name'))[0]
+
+      //*save the original file name in case of lost focus, cancels the name change
+      this.originalFileName = this.focusFile.fileName
+
+      //* make it editable
+      fileNameField.setAttribute('contenteditable', true)
+
+      //* focus the field for the name change
+      fileNameField.focus()
+
+      //* set the cursor to the end of the text, maybe leave it at the beginning idk
+      const range = document.createRange()
+      const selection = window.getSelection()
+      range.setStart(fileNameField, fileNameField.childNodes.length)
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    },
+
+    cancelNameChange(){
+      this.focusTab.getElementsByClassName('file-name')[0].innerText = this.originalFileName
+    },
+
+    manageNameChange(file, dir){
+      let newFileName = this.fileChangeName.replace(/(\r\n|\n|\r)/gm, "")
+
+      let textEl = this.focusTab.getElementsByClassName('file-name')[0]
+
+      //console.log(file, dir, newFileName);
+
+      
+      
+      const destination = path.join(dir, this.fileChangeName)
+      
+      fs.rename(file.filePath, destination, (err) =>{
+        if(err) console.log(err);
+        this.reloadDir()
+      })
+      
+      this.originalFileName = newFileName
+      textEl.innerText = newFileName
+      textEl.removeAttribute('contenteditable')
+      textEl.blur()
+      this.focusTab.focus()
+      this.fileChangeName = null
+      this.originalFileName = null
+      this.reloadDir()
+    },
+
     reloadDir(){
       this.fileList = ['']
       this.fileList = this.getDirInfo(this.currentDir)
@@ -432,9 +518,9 @@ export default {
 
     copyFileTo(file, destination){
       fs.copyFile(file.filePath, path.join(destination, file.fileName), fs.constants.COPYFILE_EXCL, (err) =>{
+        console.log('file copied to >>: ', path.join(destination, file.fileName));
         if(err) this.manageCopyError(err);
 
-        console.log('file copied to >>: ', path.join(destination, file.fileName));
       })
       this.reloadDir()
     },
