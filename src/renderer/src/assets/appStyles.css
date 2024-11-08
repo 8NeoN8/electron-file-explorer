@@ -53,7 +53,7 @@
   justify-content: space-between;
 }
 
-.file-item:focus{
+.file-item-focus{
   background-color: var(--light-dark-space);
   outline: none;
 }

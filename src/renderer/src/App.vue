@@ -1,6 +1,9 @@
 <template>
   <main class="main-container">
-    <NavBar v-if="true" :currentDir="currentDir" @searchNewDir="fileList = getDirInfo($event), dirHistory.push($event)" @setFocus="this.componentFocus = $event"></NavBar>
+    <NavBar 
+      :currentDir="currentDir" 
+      @searchNewDir="fileList = getDirInfo($event), dirHistory.push($event)"
+      @setFocus="this.componentFocus = $event"></NavBar>
 
     <div class="content-container">
   
@@ -31,7 +34,8 @@
             tabindex="0" 
             class="file-item" 
             style="cursor: pointer;" 
-            @focus="tabManaging($event, file),this.componentFocus = 'list'" 
+            @focus="tabManaging($event, file), this.componentFocus = 'list', setFocusStyle()"
+            @blur="removeFocusStyle()"
             @click="openFileOrDir(file)" 
             @keyup.enter.self="openFileOrDir(file)"
           >
@@ -71,9 +75,14 @@
 
       </div>
 
+      
+
       <div class="route-history">
 
         <div style="color: white;">
+          {{ multiSelection }}
+
+          <br> <br> <br>
           {{ dirHistory }}
         </div>
 
@@ -100,7 +109,7 @@
 
       <h3>Estas seguro que quieres enviar a la papelera?</h3>
       <div class="dialog-buttons" style="display: flex; width: 100%; justify-content: space-around;">
-        <button class="confirm-deletion" @click="IPC_SendToTrash(focusFile);reloadDir()">Si</button>
+        <button class="confirm-deletion" @click="IPC_SendToTrash()">Si</button>
         <button class="cancel-deletion" @click="isDialogOpen = !isDialogOpen">No</button>
       </div>
 
@@ -138,12 +147,26 @@ export default {
       singleCutFile: null,
       originalFileName: null,
       fileChangeName: null,
+      selectedFiles: [],
+      multiSelection: false,
+      toCopy: false,
+      toCut: false,
+      isRKey: false,
+      isSKey: false,
+      selectionMode: false,
     }
   },
   components:{
     NavBar,
   },
   methods: {
+    setFocusStyle(){
+      this.focusTab.classList.add('file-item-focus')
+    },
+
+    removeFocusStyle(){
+      this.focusTab.classList.remove('file-item-focus')
+    },
 
     async IPC_GetConfig(){
       this.appConfig = await window.api.getConfiguration()
@@ -282,13 +305,26 @@ export default {
       this.focusFile = file
     },
 
-    async IPC_SendToTrash(file){
+    async IPC_SendToTrash(){
       //'D:\\MIS_NUEVOS_ARCHIVOS\\prueba recycle bin 2'
 
-      await window.api.sendToTrash(file.filePath)
+      console.log(this.multiSelection, this.selectedFiles, this.focusFile.filePath.toString());
+
+      if(!this.multiSelection){
+        await window.api.sendToTrash(this.focusFile.filePath)
+      }
+      
+      if(this.multiSelection){
+        for (let i = 0; i < this.selectedFiles.length; i++) {
+          await window.api.sendToTrash(this.selectedFiles[i].filePath)
+        }
+      }
+
       this.isDialogOpen = false
       this.focusFile = null
       this.fileList = this.getDirInfo(this.currentDir)
+      this.reloadDir()
+
     },
 
     shortcutManager(keyEvent){
@@ -320,7 +356,7 @@ export default {
             this.tabManager[taberIndex+1].focus()
           }
           if(taberIndex == this.tabManager.length-1){
-            file_list[2].focus()
+            file_list[1].focus()
           }
           break;
         case 'arrowup':
@@ -395,23 +431,61 @@ export default {
           }
           break;
         case 'c':
-          if(keyEvent.ctrlKey && this.focusTab && this.focusFile){
+          this.toCut = false
+          this.toCopy = true
+          if(keyEvent.ctrlKey && this.focusTab && this.focusFile && this.multiSelection == false){
             this.singleCopyFile = this.focusFile
             console.log('file copied >>:', this.singleCopyFile);
           }
           break;
         case 'v':
-          if(this.singleCopyFile){
+          if(this.singleCopyFile && this.toCopy){
             this.copyFileTo(this.singleCopyFile, this.currentDir)
           }
-          if(this.singleCutFile){
+          if(this.singleCutFile && this.toCopy){
             this.cutFileTo(this.singleCutFile, this.currentDir)
           }
+          if(this.multiSelection){
+            console.log('HAY MAS DE UN ARCHIVO SELECCIONADO MARPARICION');
+            if(this.toCopy){
+              console.log('ESTOY MANDANDO A COPIAR UN ARRAY DE ARCHIVOS');
+              this.copyFileTo(this.selectedFiles, this.currentDir, this.multiSelection)
+            }
+
+            if(this.toCut){
+              this.cutFileTo(this.selectedFiles, this.currentDir, this.multiSelection)
+            }
+          }
+          
           break;
         case 'x':
-          if(keyEvent.ctrlKey && this.focusTab && this.focusFile){
+          this.toCopy = false
+          this.toCut = true
+          if(keyEvent.ctrlKey && this.focusTab && this.focusFile && !this.multiSelection){
             this.singleCutFile = this.focusFile
             console.log('file cut >>:', this.singleCutFile);
+          }
+          break;
+        case 'a':
+          if(keyEvent.ctrlKey && keyEvent.shiftKey){
+            this.tabManager.forEach(tab => {
+              tab.classList.add('file-item-focus')
+            })
+            this.selectedFiles = this.fileList
+          }
+          break;
+        case 's':
+        if(keyEvent.ctrlKey && keyEvent.shiftKey){
+          console.log('Selection file>>: ', this.focusFile);
+          this.selectedFiles.push(this.focusFile)
+          console.log('Selected Files>>:', this.selectedFiles);
+        }
+          break;
+        case 'm':
+          if (keyEvent.ctrlKey) {
+            if(this.focusTab && this.focusFile){
+              this.startRenameProcess()
+            }
           }
           break;
         case 'f2':
@@ -443,18 +517,12 @@ export default {
     handleChangeNameInput(event){
       let input = event.target.innerText
       
-      
       input = input.replace(/(\r\n|\n|\r)/gm, "")
 
-      
       this.fileChangeName = input
 
       console.log(input);
 
-      /* const fileNameField = Array.from(this.focusTab.getElementsByClassName('file-name'))[0]
-
-      event.target.innerText = input
-      console.log(fileNameField.innerText); */
     },
 
     startRenameProcess(){
@@ -489,10 +557,6 @@ export default {
 
       let textEl = this.focusTab.getElementsByClassName('file-name')[0]
 
-      //console.log(file, dir, newFileName);
-
-      
-      
       const destination = path.join(dir, this.fileChangeName)
       
       fs.rename(file.filePath, destination, (err) =>{
@@ -515,38 +579,50 @@ export default {
       this.fileList = this.getDirInfo(this.currentDir)
     },
 
+    copyFileTo(file, destination, multiFile = false){
+      if(!multiFile){
+        fs.copyFile(file.filePath, path.join(destination, file.fileName), fs.constants.COPYFILE_EXCL, (err) =>{
+          console.log('file copied to >>: ', path.join(destination, file.fileName));
+          if(err) this.manageCopyError(err);
+  
+        })
+        this.reloadDir()
+      }
 
-    copyFileTo(file, destination){
-      fs.copyFile(file.filePath, path.join(destination, file.fileName), fs.constants.COPYFILE_EXCL, (err) =>{
-        console.log('file copied to >>: ', path.join(destination, file.fileName));
-        if(err) this.manageCopyError(err);
-
-      })
+      if(multiFile){
+        console.log('COPIANDO ARRAY DE ARCHIVOS');
+        for (let i = 0; i < this.fileList.length; i++) {
+          console.log('SE COPIO UN ARCHIVO VERGA');
+          fs.copyFile(file[i].filePath, path.join(destination, file[i].fileName), fs.constants.COPYFILE_EXCL, (err) =>{
+            if(err) this.manageCopyError(err);
+          })
+          
+        }
+        this.reloadDir()
+      }
       this.reloadDir()
     },
     
-    cutFileTo(file, destination){
-      const newPath = path.join(destination, file.fileName)
+    cutFileTo(file, destination, multiFile = false){
 
-      fs.access(newPath, fs.constants.F_OK, (err) => {
-        if(err){
-          fs.rename(file.filePath, newPath, (err) =>{
-            if(err) console.log(err);
-          })
-          console.log('file cut and pasted');
-          this.reloadDir()
-        }
+      if(!multiFile){
 
-        if(!err){
-          console.log('file already exists at directory>>: ', destination, ' do you want to override? ');
-          /*
-          fs.rename(file.filePath, newPath, (err) =>{
-            if(err) console.log(err);
-          })
-          this.reloadDir()
-          */
-        }
-      })
+        const newPath = path.join(destination, file.fileName)
+  
+        fs.access(newPath, fs.constants.F_OK, (err) => {
+          if(err){
+            fs.rename(file.filePath, newPath, (err) =>{
+              if(err) console.log(err);
+            })
+            console.log('file cut and pasted');
+            this.reloadDir()
+          }
+  
+          if(!err){
+            console.log('file already exists at directory>>: ', destination, ' do you want to override? ');
+          }
+        })
+      }
 
 
     },
@@ -657,6 +733,20 @@ export default {
         this.tabManager = Array.from(document.querySelectorAll('.file-item'))
       },
       deep: true
+    },
+    'selectedFiles':{
+      handler: function(newValue){
+        console.log(this.selectedFiles);
+        if(newValue.length > 1){
+          this.multiSelection = true
+        }
+      },
+      deep: true
+    },
+    'data': {
+      handler: function(newValue){
+        console.log(newValue);
+      }
     }
   },
   async created() {
@@ -686,6 +776,12 @@ export default {
 
     document.addEventListener('keydown', (e)=>{
       this.shortcutManager(e)
+      if(e.key.toLowerCase() == 's') this.isSKey = true
+      if(e.key.toLowerCase() == 'r') this.isSKey = true
+    })
+    document.addEventListener('keyup', (e)=>{
+      if(e.key.toLowerCase() == 's') this.isSKey = false
+      if(e.key.toLowerCase() == 'r') this.isSKey = false
     })
 
     if(this.fileList.length > 2){
@@ -693,6 +789,9 @@ export default {
     }
 
     this.currentDir = this.appConfig.homeDirectory
+
+
+    console.log(this.$data)
   },
 }
 </script>

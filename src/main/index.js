@@ -116,24 +116,27 @@ async function setHomeDir(homeDir){
   })
 
 }
-async function sendToTrash(file){
+/* async function sendToTrash(file){
   await shell.trashItem(file)
-}
+} */
 
 async function sendToFakeTrash(file){
-
-  const destination = join(appConfig.recycleBinDir, file.split('\\')[1])
-
+  console.log(file);
+  /* const destination = join(appConfig.recycleBinDir, file.split('\\')[1])
+  
   fs.copyFile(file, destination, (err) => {
+    console.log('SE COPIO UN ARCHIVO A LA PAPELERA MARDICION');
     if(err) console.log('Error Moving file>>: ', err);
   })
-  await removeOriginalForCopy(file)
+  await removeOriginalForCopy(file) */
 }
 
 async function removeOriginalForCopy(file){
+  console.log(file);
   if(fs.statSync(file).isDirectory()){
+    console.log('SE VA A BORRAR UN ARCHIVO');
     fs.rmdir(file, (err) => {
-      if(err) console.log('Error at original dir deletion>>: ', err);
+      if(err) console.log('Error at original dir deletion>>: ', file, err);
     })
     return
   }
