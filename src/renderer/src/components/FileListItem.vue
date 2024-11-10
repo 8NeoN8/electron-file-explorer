@@ -6,6 +6,7 @@
     tabindex="0"  
     @blur="rmFileFocus($event.target)"
     @keyup.enter.self="this.$emit('openFileOrDir', fileItem)"
+    @click="this.$emit('openFileOrDir', fileItem)"
     @focus="
       this.$emit('setListItemFocus',[$event,fileItem]), 
       this.$emit('focusListComponent'),
@@ -21,7 +22,7 @@
   >
   
     <div class="file-list-item-component file-number">
-      {{ isHeader ? '#' : formattedItemIndex }}
+      {{ isHeader ? '###' : formattedItemIndex }}
     </div>
     <div class="file-list-item-component file-name">
       <i 
@@ -34,11 +35,11 @@
       {{ isHeader ? 'CreationDate' : fileItem.birthtime }}
     </div>
     <div class="file-list-item-component file-type">
-      <i 
+      <!-- <i 
         v-if="!isHeader"
         class="file-icon pi" 
         :class="fileItem.isDir ? 'pi-folder' : 'pi-file'"
-      ></i>
+      ></i> -->
       {{ isHeader ? 'Type' : fileItem.isDir ? 'Folder' : 'File' }}
     </div>
     <div class="file-list-item-component file-size">
@@ -102,6 +103,7 @@ export default {
     'focusListComponent',
     'openFileOrDir',
     'sendInputErrorMessage',
+    'sendInputOkMessage',
     'reloadCurrentDir'
   ],
   computed:{
@@ -144,7 +146,6 @@ export default {
       }
     },
     async CheckAnsSend(){
-      console.log('enter');
       const notValidFileNames = ['CON','PRN','AUX','NUL','COM1','COM2','COM3','COM4','COM5','COM6','COM7','COM8','COM9','COM0','LPT1','LPT2','LPT3','LPT4','LPT5','LPT6','LPT7','LPT8','LPT9','LPT0']
 
       let isNameValid = false
@@ -154,7 +155,11 @@ export default {
 
         if(this.fileNameCreation == notValidFileNames[i]){
           //!create reactive component to output messages to the user
-          this.$emit('sendInputErrorMessage', {msg:'The Directory can not have that name'})
+          this.$emit('sendInputErrorMessage', {
+              header:'Dir name error',
+              msg:'Directory can not have that name',
+              type: 'error'
+            })
           return
         }
 
@@ -163,7 +168,11 @@ export default {
 
           if(noExtensionFileName == notValidFileNames[i]){
             //!create reactive component to output messages to the user
-            this.$emit('sendInputErrorMessage', {msg:'The File can not have that name'})
+            this.$emit('sendInputErrorMessage', {
+              header:'File name error',
+              msg:'File can not have that name',
+              type: 'error'
+            })
             return
           }
         }
@@ -180,35 +189,23 @@ export default {
           msgStatus = await this.IPC_CreateFile(this.currentDir, this.fileNameCreation)
         } 
         if(!isFile){
-          console.log('its a folder');
           msgStatus = await this.IPC_CreateDir(this.currentDir, this.fileNameCreation)
         }
 
-        console.log('msgStatus>>: ',await msgStatus);
-        if(await msgStatus.type != 'ok'){
-          console.error(await msgStatus.errroMsg);
-        }else console.log(await msgStatus.header);
+        msgStatus?.type != 'ok' ? this.$emit('sendInputOkMessage', msgStatus) : this.$emit('sendInputErrorMessage', msgStatus)
+
+        this.hideInput()
+
+        this.$emit('reloadCurrentDir')
       }
-      this.$emit('reloadCurrentDir')
+      
+      
     },
     async IPC_CreateFile(dirPath, fileName){
-      const fileCreationResolve = await window.api.createFile(dirPath, fileName)
-
-      /* if(await fileCreationResolve){
-        console.log(await fileCreationResolve);
-      } */
-
-      return fileCreationResolve
+      return await window.api.createFile(dirPath, fileName)
     },
     async IPC_CreateDir(dirPath, fileName){
-      const dirCreationResolve = await window.api.createDir(dirPath, fileName)
-
-      /* if(await dirCreationResolve){
-        console.log(await dirCreationResolve);
-      } */
-
-      console.log(await dirCreationResolve);
-      return dirCreationResolve
+      return await window.api.createDir(dirPath, fileName)
     },
   },
 }

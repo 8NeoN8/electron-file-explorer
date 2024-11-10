@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { type } from 'os';
 
 
 const fs = require('fs');
@@ -54,6 +55,10 @@ function createWindow() {
   }
 }
 
+/* async function sendToTrash(file){
+  await shell.trashItem(file)
+} */
+
 async function testErrorMsg(){
   try {
     throw Error('testingErrorMsg')
@@ -76,23 +81,29 @@ async function createFile(dirPath, fileName){
   const creationPath = join(dirPath, fileName)
 
   try {
-    fs.writeFileSync(creationPath, '', {flag: 'wx'}, (err)=>{
-      if(err) throw err
-
-      const result = {
-        header: 'Archivo creado con exito',
-        errorMsg: null,
-        type: 'ok',
+    fs.writeFile(creationPath,'','utf-8', (error) =>{
+      if(error){
+        throw Error(error)
       }
-      return result
-    })
-  } catch (error) {
-    console.log(error);
-    return {
-      header: 'Error al crear archivo',
-      errorMsg: error,
-      type: 'error'
+    })  
+
+    const okResult = {
+      header: 'Exito',
+      msg: null,
+      type: 'ok' 
     }
+
+    return okResult
+
+  } catch (error) {
+    
+    const errorResult = {
+      header: 'Error',
+      msg: await error,
+      type: 'error' 
+    }
+
+    return errorResult
   }
 }
 
@@ -100,30 +111,32 @@ async function createDir(dirPath, dirName){
   const creationPath = join(dirPath, dirName)
 
   try {
-    fs.mkdirSync(creationPath, (err)=>{
-      if(err) return err
-      /* console.log({
-        header: 'Directorio creado con exito',
-        errorMsg: null,
-        type: 'ok',
-      }); */
-
-      const result = {
-        header: 'Directorio creado con exito',
-        errorMsg: null,
-        type: 'ok',
-      }
-      return result
-    })
     
-  } catch (error) {
-    console.log(error);
-    return {
-      header: 'Error al crear el directorio',
-      errorMsg: error,
-      type: 'error'
+    const exists = await fs.promises.access(creationPath, fs.constants.F_OK)
+
+    if(exists == undefined){
+      const errorResult = {
+        header: 'Error',
+        msg: 'path already exists',
+        type: 'error' 
+      }
+
+      return errorResult
     }
+  } catch (err) {
+
+    fs.mkdirSync(creationPath)  
+  
+    const okResult = {
+      header: 'Exito',
+      msg: null,
+      type: 'ok' 
+    }
+  
+    return okResult
   }
+
+
 }
 
 async function runCmd(command) {
@@ -155,7 +168,6 @@ async function createConfigFile(){
 
   fs.writeFile(configFileRoute, baseConfigurationJSON, 'utf8', (err) => {
     if(err){
-      //console.log(err);
     }
 
     getConfigs()
@@ -185,37 +197,31 @@ async function setHomeDir(homeDir){
 
     config = JSON.stringify(config)
 
-    fs.writeFile(configFileRoute, config, 'utf-8',(err) => console.log(err))
+    fs.writeFile(configFileRoute, config, 'utf-8',(err) => {})
   })
 
 }
-/* async function sendToTrash(file){
-  await shell.trashItem(file)
-} */
+
 
 async function sendToFakeTrash(file){
-  console.log(file);
   /* const destination = join(appConfig.recycleBinDir, file.split('\\')[1])
   
   fs.copyFile(file, destination, (err) => {
-    console.log('SE COPIO UN ARCHIVO A LA PAPELERA MARDICION');
-    if(err) console.log('Error Moving file>>: ', err);
+    if(err) {}
   })
   await removeOriginalForCopy(file) */
 }
 
 async function removeOriginalForCopy(file){
-  console.log(file);
   if(fs.statSync(file).isDirectory()){
-    console.log('SE VA A BORRAR UN ARCHIVO');
     fs.rmdir(file, (err) => {
-      if(err) console.log('Error at original dir deletion>>: ', file, err);
+      if(err){}
     })
     return
   }
 
   fs.rm(file, (err) => {
-    if(err) console.log('Error at original file deletion>>: ', err);
+    if(err){}
   })
 }
 
@@ -234,11 +240,11 @@ async function deleteRecursiveDir(dir){
     if(fs.statSync(dirOrFile.filePath).isDirectory()){
       deleteRecursiveDir(dirOrFile.filePath)
     }else{
-      console.log('Deleting file... ', dirOrFile.filePath);
+      
       fs.rm(dirOrFile.filePath, (err) => {
-        if(err) console.log('error borrando archivo>>: ',err);
+        if(err){}
       })
-      console.log('archivo borrado>>: ', dirOrFile.fileName);
+      
     }
 
   });
@@ -276,13 +282,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle('IPC_CreateFile', (event, data) =>{
     const test = createFile(data.path, data.name)
-    console.log(test);
     return test
   })
 
   ipcMain.handle('IPC_CreateDir', (event, data) =>{
     const test = createDir(data.path, data.name)
-    console.log(test);
     return test
   })
 
@@ -300,7 +304,6 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 
-  testMsg()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

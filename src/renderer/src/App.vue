@@ -14,6 +14,9 @@
         <FileListItem 
           :isInput="true" 
           :currentDir="currentDir"
+          @reloadCurrentDir="this.reloadDir()"
+          @sendInputErrorMessage="systemMessage = $event, console.log($event)"
+          @sendInputOkMessage="systemMessage = $event, console.log($event)"
         />
 
         <template v-for="(file, index) in fileList" :key="index">
@@ -84,6 +87,8 @@
 
     </dialog>
 
+    <MessageAlert :messageObject="systemMessage"/>
+
   </main>
 </template>
 
@@ -91,6 +96,7 @@
 import NavBar from './components/NavBar.vue';
 import { format } from 'date-fns';
 import FileListItem from './components/FileListItem.vue';
+import MessageAlert from './components/MessageAlert.vue';
 const remote = require('@electron/remote');
 const fs = require('fs');
 const path = require('path');
@@ -124,11 +130,17 @@ export default {
       isRKey: false,
       isSKey: false,
       selectionMode: false,
+      systemMessage: {
+        header: 'File Name Error',
+        msg: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo, dolor, quos minus est totam, debitis quo numquam corporis laborum provident nulla. Illo, delectus! Ipsa necessitatibus odit animi ea aut voluptate?',
+        type:'error'
+      }
     }
   },
   components:{
     NavBar,
-    FileListItem
+    FileListItem,
+    MessageAlert
   },
   methods: {
     setFocusStyle(){
