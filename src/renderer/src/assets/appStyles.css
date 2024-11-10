@@ -41,13 +41,14 @@
 .file-list{
   list-style: none;
   background-color: var(--light-dark-space);
-  background-color: red;
   height: fit-content;
   color: var(--font-green);
 }
 
 
-.file-item{
+
+/* .file-item{
+  cursor: pointer;
   background-color: var(--dark-space);
   display: flex;
   justify-content: space-between;
@@ -84,7 +85,7 @@
 
 .focus-input{
   width: 50%;
-}
+} */
 
 .hidden{
   display: none;

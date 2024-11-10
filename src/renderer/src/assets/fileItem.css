@@ -1,0 +1,49 @@
+.file-list-item{
+  cursor: pointer;
+  background-color: var(--dark-space);
+  display: flex;
+  justify-content: space-between;
+}
+
+.file-list-item-focus{
+  background-color: var(--light-dark-space);
+  outline: none;
+}
+
+.file-list-item-component{
+  border-right: 1px solid var(--font-green);
+  width: 20%;
+  padding: 0.1rem 0.3rem;
+  padding-right: 0.5rem;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+}
+
+.file-size{
+  text-align: right;
+}
+
+.file-header-item{
+  display: flex;
+}
+
+.file-number{
+  text-align: right;
+}
+
+.file-name{
+  width: 40%;
+}
+
+.focus-input{
+  width: 50%;
+}
+
+.file-number{
+  width: 2.45rem;
+}
+
+.file-input-item{
+  display: flex;
+  background-color: var(--dark-space);
+}

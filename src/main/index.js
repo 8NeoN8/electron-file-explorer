@@ -2,6 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+
+
 const fs = require('fs');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
@@ -52,6 +54,78 @@ function createWindow() {
   }
 }
 
+async function testErrorMsg(){
+  try {
+    throw Error('testingErrorMsg')
+    return {
+      header: 'genio adquirido con exito',
+      errorMsg: null,
+      type: 'ok',
+    }
+  } catch (error) {
+    return {
+      header: 'Error al ser un genio',
+      errorMsg: error,
+      type: 'error'
+    }
+  }
+}
+
+async function createFile(dirPath, fileName){
+
+  const creationPath = join(dirPath, fileName)
+
+  try {
+    fs.writeFileSync(creationPath, '', {flag: 'wx'}, (err)=>{
+      if(err) throw err
+
+      const result = {
+        header: 'Archivo creado con exito',
+        errorMsg: null,
+        type: 'ok',
+      }
+      return result
+    })
+  } catch (error) {
+    console.log(error);
+    return {
+      header: 'Error al crear archivo',
+      errorMsg: error,
+      type: 'error'
+    }
+  }
+}
+
+async function createDir(dirPath, dirName){
+  const creationPath = join(dirPath, dirName)
+
+  try {
+    fs.mkdirSync(creationPath, (err)=>{
+      if(err) return err
+      /* console.log({
+        header: 'Directorio creado con exito',
+        errorMsg: null,
+        type: 'ok',
+      }); */
+
+      const result = {
+        header: 'Directorio creado con exito',
+        errorMsg: null,
+        type: 'ok',
+      }
+      return result
+    })
+    
+  } catch (error) {
+    console.log(error);
+    return {
+      header: 'Error al crear el directorio',
+      errorMsg: error,
+      type: 'error'
+    }
+  }
+}
+
 async function runCmd(command) {
   const { stdout, stderr } = await exec(command);
   return stdout
@@ -69,7 +143,6 @@ async function getWinBinDir(){
 
   return binLocation
 }
-
 
 async function createConfigFile(){
   let baseConfiguration = {
@@ -201,14 +274,33 @@ app.whenReady().then(() => {
     deleteRecursiveDir(appConfig.recycleBinDir)
   })
 
+  ipcMain.handle('IPC_CreateFile', (event, data) =>{
+    const test = createFile(data.path, data.name)
+    console.log(test);
+    return test
+  })
+
+  ipcMain.handle('IPC_CreateDir', (event, data) =>{
+    const test = createDir(data.path, data.name)
+    console.log(test);
+    return test
+  })
+
+  ipcMain.handle('testingMsg', ()=>{
+    return testErrorMsg()
+  })
+
   checkConfig()
   createWindow()
+
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  testMsg()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

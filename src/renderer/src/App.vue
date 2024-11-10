@@ -8,59 +8,28 @@
     <div class="content-container">
   
       <ul v-if="fileList" class="file-list" id="file-list">
-        <li class="file-item" id="file-list-column-headers">
-          <div class="file-name file-item-header">
-            Name
-          </div>
-          <div class="file-create-date file-item-header">
-            CreationDate
-          </div>
-
-          <div class="file-type file-item-header">
-            Type
-          </div>
-          <div class="file-size file-item-header">
-            Size
-          </div>
-        </li>
-
-        <li class="file-item hidden" id="temp-file-name">
-          <input type="text" id="temp-input" @blur="hideInput()" @keypress.enter="createFileOrDirectory(tempFileName)" @input="validateFileInput()" v-model="tempFileName">
-        </li>
         
+        <FileListItem :isHeader="true"/>
+        
+        <FileListItem 
+          :isInput="true" 
+          :currentDir="currentDir"
+        />
+
         <template v-for="(file, index) in fileList" :key="index">
 
-          <li 
-            tabindex="0" 
-            class="file-item" 
-            style="cursor: pointer;" 
-            @focus="tabManaging($event, file), this.componentFocus = 'list', setFocusStyle()"
-            @blur="removeFocusStyle()"
-            @click="openFileOrDir(file)" 
-            @keyup.enter.self="openFileOrDir(file)"
-          >
-
-            <div class="file-name file-item-component"
-              @keyup.enter="manageNameChange(focusFile, currentDir)"
-              @input="handleChangeNameInput($event)"
-              @blur="cancelNameChange()"
-            >
-              {{ file.fileName }}
-            </div>
-            <div class="file-create-date file-item-component">
-              {{ file.birthtime }}
-            </div>
-
-            <div class="file-type file-item-component">
-              {{ file.isDir ? 'Folder' : 'File' }}
-            </div>
-            <div class="file-size file-item-component">
-              {{ file.size ? `${file.size} KB` : '' }}
-            </div>
-          </li>
-
+          <FileListItem
+            :fileItem="file"
+            :itemIndex="index"
+            @setListItemFocus="this.tabManaging($event)"
+            @focusListComponent="this.componentFocus = 'list'"
+            @openFileOrDir="openFileOrDir()"
+          />
+          
         </template>
 
+        
+        
       </ul>
 
       <div v-if="fileList.length == 0 && !appConfig.homeDirectory" class="prompt-home-dir">
@@ -121,6 +90,7 @@
 <script>
 import NavBar from './components/NavBar.vue';
 import { format } from 'date-fns';
+import FileListItem from './components/FileListItem.vue';
 const remote = require('@electron/remote');
 const fs = require('fs');
 const path = require('path');
@@ -158,6 +128,7 @@ export default {
   },
   components:{
     NavBar,
+    FileListItem
   },
   methods: {
     setFocusStyle(){
@@ -299,9 +270,11 @@ export default {
       }
     },
 
-    tabManaging(tab, file){
-      this.tabManager = Array.from(document.getElementsByClassName('file-item'))
-      this.focusTab = tab.srcElement
+    tabManaging(e){
+      const event = e[0]
+      const file = e[1]
+      this.tabManager = Array.from(document.getElementsByClassName('file-list-item'))
+      this.focusTab = event.target
       this.focusFile = file
     },
 
@@ -337,7 +310,7 @@ export default {
       * then stablish C:\$Recycle.Bin\userSID as trash location, if it exists, if it doesnt, then prompt the user to stablish the location of their recycle bin
       * but if they dont want, warn the user that any deletion done in the app is permanent and irreversible
       */
-     const file_list = Array.from(document.querySelectorAll('.file-item'))
+     const file_list = Array.from(document.querySelectorAll('.file-list-item'))
      this.tabManager = file_list
 
       let taberIndex = this.tabManager.indexOf(this.focusTab)
@@ -420,8 +393,8 @@ export default {
         case 'n':
           if(this.componentFocus == 'list'){
             if(keyEvent.ctrlKey & keyEvent.shiftKey){
-              document.getElementById('temp-file-name').classList.remove('hidden')
-              document.getElementById('temp-input').focus()
+              console.log(FileListItem);
+              FileListItem.methods.focusInput()
             }
           }
           break;
@@ -696,36 +669,8 @@ export default {
       this.fileList = this.getDirInfo(this.currentDir)
 
     },
-
     //! AGREGAR MENSAJE DE ERROR POR AHORA SOLO NO TE DEJA CREAR EL ARCHIVO / DIRECTORIO
 
-    validateFileInput(){
-      
-      
-      
-      let notValidChars = '<>:"/|?*'
-      notValidChars = notValidChars.split('')
-      notValidChars.push('\\')
-
-      for (let i = 0; i < notValidChars.length; i++) {
-        if(this.tempFileName.includes(notValidChars[i])){
-          console.log('Invalid character found');
-          this.isTempNameValid = false
-          return
-        }
-      }
-
-      if (!this.isTempNameValid) {
-        this.isTempNameValid = true
-      }
-      
-    },
-
-    hideInput(){
-      let inputField = document.getElementById('temp-file-name')
-      inputField.classList.add('hidden')
-      this.tempFileName = null
-    },
   },
   watch:{
     'fileList':{
@@ -743,10 +688,11 @@ export default {
       },
       deep: true
     },
-    'data': {
+    '$data': {
       handler: function(newValue){
-        console.log(newValue);
-      }
+        //console.log(newValue);
+      },
+      deep:true
     }
   },
   async created() {
@@ -791,11 +737,15 @@ export default {
     this.currentDir = this.appConfig.homeDirectory
 
 
-    console.log(this.$data)
+    //console.log(this.$data)
+
+    /* let test = await window.api.testingMsg()
+    console.log(test); */
   },
 }
 </script>
 
 <style>
-@import './assets/appStyles.css'
+@import './assets/appStyles.css';
+@import 'primeicons/primeicons.css';
 </style>

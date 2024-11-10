@@ -3,10 +3,13 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
+  testingMsg: () => electronAPI.ipcRenderer.invoke('testingMsg'),
   getConfiguration: () => electronAPI.ipcRenderer.invoke('IPC_GetConfig'),
   setHomeDirectory: (homeDir) => electronAPI.ipcRenderer.invoke('IPC_SetHomeDir', homeDir),
   sendToTrash: (file) => electronAPI.ipcRenderer.invoke('IPC_SendToTrash',file),
   clearTrash: () => electronAPI.ipcRenderer.invoke('IPC_ClearTrash'),
+  createFile: async (path, name) => electronAPI.ipcRenderer.invoke('IPC_CreateFile', {path, name}),
+  createDir: async (path, name) => electronAPI.ipcRenderer.invoke('IPC_CreateDir', {path, name}),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
