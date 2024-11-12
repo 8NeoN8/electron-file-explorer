@@ -15,8 +15,8 @@
           :isInput="true" 
           :currentDir="currentDir"
           @reloadCurrentDir="this.reloadDir()"
-          @sendInputErrorMessage="systemMessage = $event, console.log($event)"
-          @sendInputOkMessage="systemMessage = $event, console.log($event)"
+          @sendInputErrorMessage="showMessage($event)"
+          @sendInputOkMessage="showMessage($event)"
         />
 
         <template v-for="(file, index) in fileList" :key="index">
@@ -131,9 +131,9 @@ export default {
       isSKey: false,
       selectionMode: false,
       systemMessage: {
-        header: 'File Name Error',
-        msg: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo, dolor, quos minus est totam, debitis quo numquam corporis laborum provident nulla. Illo, delectus! Ipsa necessitatibus odit animi ea aut voluptate?',
-        type:'error'
+        header: 'Placeholder',
+        msg: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo, dolor',
+        type:'ok'
       }
     }
   },
@@ -143,6 +143,12 @@ export default {
     MessageAlert
   },
   methods: {
+
+    showMessage(msg){
+      this.systemMessage = msg
+      console.log(this.systemMessage)
+      MessageAlert.methods.showMessage()
+    },
     setFocusStyle(){
       this.focusTab.classList.add('file-item-focus')
     },
@@ -633,55 +639,6 @@ export default {
         this.tabManager[2].focus()
       }
     },
-    
-    //! AGREGAR MENSAJE DE ERROR POR AHORA SOLO NO TE DEJA CREAR EL ARCHIVO / DIRECTORIO
-    createFileOrDirectory(inputName){
-      
-
-      let notValidFileNames = ['CON','PRN','AUX','NUL','COM1','COM2','COM3','COM4','COM5','COM6','COM7','COM8','COM9','COM0','LPT1','LPT2','LPT3','LPT4','LPT5','LPT6','LPT7','LPT8','LPT9','LPT0']
-      
-      for (let i = 0; i < notValidFileNames.length; i++) {
-        if(this.tempFileName.includes('.')){
-          let tempname = this.tempFileName.split('.')[0]
-
-          if(this.tempFileName.includes(notValidFileNames[i])){
-            console.log('Invalid character found');
-            this.isTempNameValid = false
-            return
-          }
-        }else{
-          if(this.tempFileName.includes(notValidFileNames[i])){
-            console.log('Invalid character found');
-            this.isTempNameValid = false
-            return
-          }
-        }
-      }
-
-      console.log(inputName);
-      if(!this.isTempNameValid) {
-        console.log('nombre no valido');
-        return
-      }
-
-      console.log(inputName);
-      let filepath = path.join(this.currentDir,inputName)
-
-      if(this.tempFileName.includes('.')){
-        fs.writeFile(filepath, '', {flag: 'wx'}, (err)=>{
-          if(err) console.log('Error found on file>>: ', err);
-        })
-      }else{
-        fs.mkdir(filepath, (err)=>{
-          if(err) console.log('Error found on dir>>: ', err);
-        })
-      }
-
-      this.hideInput()
-      this.fileList = this.getDirInfo(this.currentDir)
-
-    },
-    //! AGREGAR MENSAJE DE ERROR POR AHORA SOLO NO TE DEJA CREAR EL ARCHIVO / DIRECTORIO
 
   },
   watch:{
@@ -735,7 +692,7 @@ export default {
     document.addEventListener('keydown', (e)=>{
       this.shortcutManager(e)
       if(e.key.toLowerCase() == 's') this.isSKey = true
-      if(e.key.toLowerCase() == 'r') this.isSKey = true
+      if(e.key.toLowerCase() == 'r') this.isRKey = true
     })
     document.addEventListener('keyup', (e)=>{
       if(e.key.toLowerCase() == 's') this.isSKey = false
@@ -748,11 +705,6 @@ export default {
 
     this.currentDir = this.appConfig.homeDirectory
 
-
-    //console.log(this.$data)
-
-    /* let test = await window.api.testingMsg()
-    console.log(test); */
   },
 }
 </script>

@@ -140,8 +140,12 @@ export default {
       for (let i = 0; i < notValidChars.length; i++) {
         if(this.fileNameCreation.includes(notValidChars[i])){
           this.fileNameCreation = this.fileNameCreation.replaceAll(notValidChars[i], '')
-          this.$emit('sendInputErrorMessage', `Filename can not have any of these symbols ?|\\*/"'<>:`)
-          return
+          const errorMessage = {
+            header: 'Naming Error',
+            msg: 'The name can not contain any of the following characters ?|\\*/"<>:',
+            type: 'error'
+          }
+          this.$emit('sendInputErrorMessage', errorMessage)
         }
       }
     },
@@ -154,7 +158,6 @@ export default {
       for (let i = 0; i < notValidFileNames.length; i++) {
 
         if(this.fileNameCreation == notValidFileNames[i]){
-          //!create reactive component to output messages to the user
           this.$emit('sendInputErrorMessage', {
               header:'Dir name error',
               msg:'Directory can not have that name',
@@ -167,7 +170,6 @@ export default {
           const noExtensionFileName = this.fileNameCreation.split('.')[0]
 
           if(noExtensionFileName == notValidFileNames[i]){
-            //!create reactive component to output messages to the user
             this.$emit('sendInputErrorMessage', {
               header:'File name error',
               msg:'File can not have that name',

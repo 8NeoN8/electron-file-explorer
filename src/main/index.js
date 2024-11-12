@@ -81,29 +81,29 @@ async function createFile(dirPath, fileName){
   const creationPath = join(dirPath, fileName)
 
   try {
-    fs.writeFile(creationPath,'','utf-8', (error) =>{
-      if(error){
-        throw Error(error)
+
+    const isError = await fs.promises.writeFile(creationPath)
+
+    if(!Error){
+      const okResult = {
+        header: 'Create OK',
+        msg: 'Directory created succesfully',
+        type: 'ok' 
       }
-    })  
 
-    const okResult = {
-      header: 'Exito',
-      msg: null,
-      type: 'ok' 
+      return okResult
     }
-
-    return okResult
 
   } catch (error) {
     
     const errorResult = {
-      header: 'Error',
-      msg: await error,
-      type: 'error' 
+      header: err.code,
+      msg: err.Error,
+      type: 'error'
     }
 
     return errorResult
+    
   }
 }
 
@@ -111,29 +111,28 @@ async function createDir(dirPath, dirName){
   const creationPath = join(dirPath, dirName)
 
   try {
-    
-    const exists = await fs.promises.access(creationPath, fs.constants.F_OK)
 
-    if(exists == undefined){
-      const errorResult = {
-        header: 'Error',
-        msg: 'path already exists',
-        type: 'error' 
+    const isError = await fs.promises.mkdir(creationPath)
+
+    if(!isError){
+      const okResult = {
+        header: 'Create OK',
+        msg: 'File created succesfully',
+        type: 'ok' 
       }
-
-      return errorResult
+    
+      return okResult
     }
+
   } catch (err) {
 
-    fs.mkdirSync(creationPath)  
-  
-    const okResult = {
-      header: 'Exito',
-      msg: null,
-      type: 'ok' 
+    const errorResult = {
+      header: err.code,
+      msg: err.Error,
+      type: 'error'
     }
-  
-    return okResult
+
+    return errorResult
   }
 
 

@@ -1,18 +1,22 @@
 <template>
 
-  <div id="message-alert" class="message-alert hidden">
+  <div id="message-alert" class="message-alert hidden" :class="messageObject.type == 'ok' ? 'ok-message' : 'error-message'">
 
-    <div class="message-display" :class="messageObject.ok ? 'ok-message' : 'error-mesage'">
+    <div class="message-header " >
 
-      <div class="message-header">
+      <i class="pi" :class="messageObject.type == 'ok' ? 'pi-check-circle' : 'pi-exclamation-circle'"></i>
 
-        <i class="pi" :class="messageObject.type == 'ok' ? 'pi-check-circle' : 'pi-exclamation-circle'"></i>
-
-        <div class="header-title">
-          {{ messageObject.header }}
-        </div>
-
+      <div class="header-title">
+        {{ messageObject.header }}
       </div>
+
+      <div @click="this.hideMessage()" class="close-button">
+        <i class="pi pi-times"></i>
+      </div>
+
+    </div>
+    <div class="message-display" >
+
 
       <div class="message-info">
         {{ messageObject.msg }}
@@ -35,23 +39,18 @@ export default {
   },
   props:{
     messageObject:{
-      type: Object,
-      default: {
-        header: 'File Name Error',
-        msg: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo, dolor, quos minus est totam, debitis quo numquam corporis laborum provident nulla. Illo, delectus! Ipsa necessitatibus odit animi ea aut voluptate?',
-        type:'error'
-      }
+      type: Object
     }
   },
   methods: {
     showMessage(){
       const dialog = document.getElementById('message-alert')
-      if(dialog.classList.contains('hidden')){
-        dialog.classList.remove('hidden')
-        setTimeout(() => {
-          this.hideMessage()
-        }, 3000);
-      }
+      console.log(dialog);
+      
+      dialog.classList.remove('hidden')
+      setTimeout(() => {
+        this.hideMessage()
+      }, 3000);
     },
     hideMessage(){
       document.getElementById('message-alert').classList.add('hidden')
@@ -60,7 +59,7 @@ export default {
   watch:{
     'messageObject':{
       handler: function(newValue){
-        if(newValue != {}) this.showMessage()
+        this.showMessage(newValue)
       },
       deep: true
     }
@@ -69,24 +68,35 @@ export default {
 </script>
 
 <style>
+
 .message-alert{
   position: absolute;
   bottom: 0.5rem;
   right: 0.5rem;
-  width: 20rem;
-  height: 6rem;
-  background-color: white;
+  width: 25rem;
+  height: 12rem;
+  border-radius: 15px;
+  overflow: auto;
+  padding: 0.5rem;
 }
 
 .message-display{
+  margin-top: 0.5rem;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
+  overflow: auto;
+  height: 9.4rem;
+  padding: 0.25rem;
 }
+
+
 
 .message-header{
  display: flex;
  width: 100%;
- justify-content: space-around;
+ justify-content: space-between;
+ height: 1rem;
 }
 
 .ok-message{
@@ -94,6 +104,19 @@ export default {
 }
 
 .error-message{
-  background-color: lightcoral;
+  background-color: rgb(241, 85, 85);
 }
+
+.error-message > .message-display{
+  background-color: rgb(255, 145, 145);
+}
+
+.ok-message > .message-display{
+  background-color: rgb(181, 241, 181);
+}
+
+.close-button{
+  cursor: pointer;
+}
+
 </style>
