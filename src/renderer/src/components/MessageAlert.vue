@@ -45,7 +45,6 @@ export default {
   methods: {
     showMessage(){
       const dialog = document.getElementById('message-alert')
-      console.log(dialog);
       
       dialog.classList.remove('hidden')
       setTimeout(() => {

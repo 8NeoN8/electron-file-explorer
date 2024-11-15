@@ -26,7 +26,7 @@
             :itemIndex="index"
             @setListItemFocus="this.tabManaging($event)"
             @focusListComponent="this.componentFocus = 'list'"
-            @openFileOrDir="openFileOrDir()"
+            @openFileOrDir="openFileOrDir($event)"
           />
           
         </template>
@@ -94,9 +94,8 @@
 
 <script>
 import NavBar from './components/NavBar.vue';
-import { format } from 'date-fns';
 import FileListItem from './components/FileListItem.vue';
-import MessageAlert from './components/MessageAlert.vue';
+import MessageAlert from './components/messageAlert.vue';
 const remote = require('@electron/remote');
 const fs = require('fs');
 const path = require('path');
@@ -208,30 +207,9 @@ export default {
       
     },
 
-    getDirInfo(dir){
-      if(dir){
-        let files = fs.readdirSync(dir).map(file => {
-
-          const filePath = path.join(dir,file)
-          const fileInfo = fs.statSync(filePath)
-
-          const newFile = {
-            filePath: filePath,
-            fileName: file,
-            isDir: fs.statSync(filePath).isDirectory(),
-            size: Math.round(fileInfo.size / 1024),
-            birthtime: format(fileInfo.birthtime, "dd/MM/yyyy")
-          }
-
-          return newFile
-        })
-
-        files = files.sort((a, b) => b.isDir - a.isDir)
-        
-        this.currentDir = dir
-
-        return files
-      }
+    async getDirInfo(dir){
+      this.currentDir = dir
+      return await window.api.getDirInfo(dir)
     },
 
     manageHistory(dir){
@@ -244,19 +222,19 @@ export default {
       this.historyIndex++
     },
 
-    backHistory(){
+    async backHistory(){
 
       if(this.historyIndex > 0){
         this.historyIndex--
-        this.fileList = this.getDirInfo(this.dirHistory[this.historyIndex])
+        this.fileList = await this.getDirInfo(this.dirHistory[this.historyIndex])
       }
     },
 
-    forwardHistory(){
+    async forwardHistory(){
 
       if(this.dirHistory[this.historyIndex+1]){
         this.historyIndex++
-        this.fileList = this.getDirInfo(this.dirHistory[this.historyIndex])
+        this.fileList = await this.getDirInfo(this.dirHistory[this.historyIndex])
       }
     },
 
@@ -411,7 +389,9 @@ export default {
         case 'n':
           if(this.componentFocus == 'list'){
             if(keyEvent.ctrlKey & keyEvent.shiftKey){
-              console.log(FileListItem);
+              this.focusFile = null
+              this.focusTab = null
+              console.log(this.focusFile, this.focusTab);
               FileListItem.methods.focusInput()
             }
           }
@@ -668,7 +648,7 @@ export default {
     await this.IPC_GetConfig()
 
     if(this.appConfig?.homeDirectory){
-      this.fileList = this.getDirInfo(this.appConfig.homeDirectory)
+      this.fileList = await this.getDirInfo(this.appConfig.homeDirectory)
       this.dirHistory.push(this.appConfig.homeDirectory)
     }
   },

@@ -58,6 +58,7 @@
       id="list-input" 
       @blur="hideInput()" 
       @keypress.enter="CheckAnsSend(fileNameCreation)" 
+      @keyup.esc="hideInput()"
       @input="validateInput()" 
       v-model="fileNameCreation"
     >

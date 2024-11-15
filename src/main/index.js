@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { type } from 'os';
+import { format } from 'date-fns';
 
 
 const fs = require('fs');
@@ -249,6 +249,29 @@ async function deleteRecursiveDir(dir){
   });
 }
 
+async function getDirInfo(dirPath){
+
+  let files = fs.readdirSync(dirPath)
+  files = files.map(file => {
+
+    const filePath = join(dirPath,file)
+    const fileInfo = fs.statSync(filePath)
+
+    const newFile = {
+      filePath: filePath,
+      fileName: file,
+      isDir: fs.statSync(filePath).isDirectory(),
+      size: Math.round(fileInfo.size / 1024),
+      birthtime: format(fileInfo.birthtime, "dd/MM/yyyy")
+    }
+
+    return newFile
+  })
+
+  files = files.sort((a, b) => b.isDir - a.isDir)
+  return files
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -289,9 +312,14 @@ app.whenReady().then(() => {
     return test
   })
 
+  ipcMain.handle('IPC_GetDirInfo', (event, data) => {
+    return getDirInfo(data)
+  })
+
   ipcMain.handle('testingMsg', ()=>{
     return testErrorMsg()
   })
+
 
   checkConfig()
   createWindow()
