@@ -40,8 +40,8 @@
 
 .file-list{
   list-style: none;
-  background-color: var(--light-dark-space);
-  height: fit-content;
+  background-color: var(--dark-space);
+  /* height: calc(100% - 1.5rem); */
   color: var(--font-green);
 }
 
@@ -92,3 +92,12 @@
 }
 
 /** File List elements */ 
+
+
+.lineSearch{
+  position: absolute; 
+  width: 50%; 
+  top: 45%; 
+  left: 50%; 
+  right: 50%;
+}

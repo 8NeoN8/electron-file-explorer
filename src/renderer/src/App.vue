@@ -3,7 +3,8 @@
     <NavBar 
       :currentDir="currentDir" 
       @searchNewDir="fileList = getDirInfo($event), dirHistory.push($event)"
-      @setFocus="this.componentFocus = $event"></NavBar>
+      @setFocus="this.componentFocus = $event">
+    </NavBar>
 
     <div class="content-container">
   
@@ -89,6 +90,13 @@
 
     <MessageAlert :messageObject="systemMessage"/>
 
+    <dialog :open="isLineSearch" class="lineSearch" style="width: 50%; position: absolute; top: 5%; left: 25%;">
+      <div class="test-dialog" style="display: flex; justify-content: space-around">
+        <span>Select File: </span>
+        <input id="lineSearch-input" type="text" v-model="lineSelect" @keydown.enter.prevent="(selectLine(lineSelect))">
+      </div>
+    </dialog>
+
   </main>
 </template>
 
@@ -104,6 +112,8 @@ const exec = require('child_process').exec;
 export default {
   data() {
     return {
+      lineSelect: null,
+      isLineSearch: false,
       currentDir: null,
       appConfig: {},
       fileList: [],
@@ -154,6 +164,16 @@ export default {
 
     removeFocusStyle(){
       this.focusTab.classList.remove('file-item-focus')
+    },
+
+    selectLine(lineIndex){
+      if(this.tabManager[lineIndex]){
+        this.lineSelect = null
+        this.isLineSearch = false
+        setTimeout(() => {
+          this.tabManager[lineIndex].focus()
+        }, 100);
+      }
     },
 
     async IPC_GetConfig(){
@@ -355,7 +375,12 @@ export default {
           break;
         case 'g':
           if (keyEvent.ctrlKey) {
-            //*this.openThisFile()
+            this.isLineSearch = true
+            console.log(document.getElementById('lineSearch-input'));
+            setTimeout(() => {
+              document.getElementById('lineSearch-input').focus()
+            }, 50);
+
           }
           break;
         case 'l':
