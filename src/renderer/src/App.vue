@@ -97,6 +97,7 @@
       </div>
     </dialog>
 
+    <SemiCli :currentDir="currentDir"></SemiCli>
   </main>
 </template>
 
@@ -104,6 +105,7 @@
 import NavBar from './components/NavBar.vue';
 import FileListItem from './components/FileListItem.vue';
 import MessageAlert from './components/messageAlert.vue';
+import SemiCli from './components/SemiCli.vue';
 const remote = require('@electron/remote');
 const fs = require('fs');
 const path = require('path');
@@ -149,7 +151,8 @@ export default {
   components:{
     NavBar,
     FileListItem,
-    MessageAlert
+    MessageAlert,
+    SemiCli
   },
   methods: {
 

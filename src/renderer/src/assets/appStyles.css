@@ -21,7 +21,7 @@
 }
 
 .content-container{
-  height: calc(100% - 1.2rem);
+  height: calc(100% - 4.2rem);
   background-color: var(--light-dark-space);
   overflow-y: auto;
 }
