@@ -2,19 +2,75 @@
 
 .nav-bar{
   width: 100%;
-  height: 1.2rem;
+  height: 2rem;
   background-color: var(--font-green);
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  justify-content: space-between;
 }
 
-.not-focus-bar{
-  color: var(--dark-space);
-  height: 100%;
+.nav-bar-buttons{
+  width: 6rem;
+  display: flex;
+  justify-content: space-around;
+}
+
+.nav-button{
+  background-color: var(--transparent);
+  border: 1px var(--font-green-hover) solid;
+  border-radius: 5px;
+  padding: 0.2rem;
+  width: 1.5rem;
+  display: flex;
+  align-items: center;
   vertical-align: middle;
-
 }
 
-.focus-bar{
+.nav-button:hover{
+  background-color: var(--font-green-hover);
+  cursor: pointer;
+}
 
+.nav-button:active, .nav-button:focus, .nav-button::selection{
+  outline: none;
+}
+
+.nav-bar-path-display{
+  display: flex;
+  width: calc(100% - 13rem);
+  height: 2rem;
+  align-items: center;
+  font-size: 1rem;
+  
+}
+
+.nav-bar-dir-path{
+  width: 85%;
+  background-color: var(--transparent);
+  border: none;
+  text-overflow: ellipsis;
+  font-size: 1rem;
+}
+
+.nav-bar-dir-path:active, .nav-bar-dir-path:focus{
+  outline: none;
+  border: none;
+}
+
+
+[data-tooltip]:hover::after{
+  display: block;
+  position: absolute;
+  top: 1.5rem;
+  left: 0;
+  content: attr(data-tooltip);
+  background: #efefef;
+  line-break: none;
+  z-index: 10;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid var(--font-green-hover);
 }
 
 /** Nav Bar */

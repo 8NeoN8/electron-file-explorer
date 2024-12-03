@@ -1,37 +1,60 @@
 <template>
-  <nav class="nav-bar" id="nav-bar" tabindex="0" @focus="focusbar(), this.$emit('setFocus', 1)">
+  <!--@focus="focusbar(), this.$emit('setFocus', 1)"-->
+  <nav class="nav-bar" id="nav-bar" tabindex="0" >
 
-    <div class="not-focus-bar" id="not-focus-bar">
-      {{ directory }}
+    <div class="nav-bar-buttons">
+      <button data-tooltip="Back" class="pi pi-chevron-left nav-button back-button" @click="this.$emit('historyBack')"></button>
+      <button data-tooltip="Up" class="pi pi-arrow-up nav-button up-button" @click="this.$emit('dirUp')"></button>
+      <button data-tooltip="Forth" class="pi pi-chevron-right nav-button forward-button" @click="this.$emit('historyForth')"></button>
     </div>
-    <div class="focus-bar hidden" id="focus-bar">
+
+    <div class="nav-bar-path-display">
+      <span class="path-begin-icon pi pi-angle-double-right"></span>
+
       <input 
         type="text" 
-        v-model="focusInput" 
-        class="focus-input" 
-        id="focus-input" 
-        @keypress.enter="checkError()"
-        tabindex="0"
-        @blur="unfocus()"
+        tabindex="0" 
+        id="nav-bar-dir-path" 
+        class="nav-bar-dir-path"
+        v-model="dirPath"
+        @keypress.enter="validateInput()"
+        @blur="dirPath = currentDir"
       >
     </div>
+
+    <div class="extra-options nav-bar-buttons">
+      <button data-tooltip="Refresh" class="pi pi-refresh nav-button refresh-button" @click="this.$emit('dirRefresh')"></button>
+      <button data-tooltip="Shortcut List" class="pi pi-book nav-button shortcut-sheet-button" @click="this.$emit('showShortcuts')"></button>
+      <button data-tooltip="Feature List" class="pi pi-list nav-button feature-list-button" @click="this.$emit('showFeatures')"></button>
+    </div>
+  
+
   </nav>
 </template>
 
 <script>
-const fs = require('fs');
 export default {
   name: 'NavBar',
   data() {
     return {
       focusInput: null,
+      dirPath: null
     }
   },
-  emits:['searchNewDir', 'setFocus'],
+  emits:[
+    'getPath',
+    'historyBack',
+    'historyForth',
+    'dirUp',
+    'dirRefresh',
+    'showShortcuts',
+    'showFeatures'
+  ],
   computed: {
     directory(){
-      if(!this.focusInput) return this.currentDir
-      return this.focusInput
+      let temp = this.currentDir
+      return this.currentDir
+      
     },
     test(){
       return this.currentDir
@@ -44,40 +67,26 @@ export default {
     }
   },
   methods: {
-    checkError(){
-      fs.access(this.focusInput, fs.constants.F_OK, (error) =>{
-        if(error) console.log("There's an error>>: ", error)
-        if(!error){
-          document.getElementById('focus-bar').classList.add('hidden')
-          document.getElementById('not-focus-bar').classList.remove('hidden')
-          this.$emit('searchNewDir', this.focusInput)
-        };
-      })
+
+    async IPC_verifyPath(path){
+      return await window.api.verifyPath(path)
     },
-    unfocus(){
-      this.focusInput = this.currentDir
-      document.getElementById('focus-bar').classList.add('hidden')
-      document.getElementById('not-focus-bar').classList.remove('hidden')
+
+    async validateInput(){
+      const result = await this.IPC_verifyPath(this.dirPath)
+      if(result.type == 'ok'){
+        document.getElementById('nav-bar-dir-path').blur()
+        this.$emit('getPath',this.dirPath)
+      }
     },
-    focusbar(){
-      console.log(this.currentDir, this.focusInput);
-      document.getElementById('not-focus-bar').classList.add('hidden')
-      document.getElementById('focus-bar').classList.remove('hidden')
-      document.getElementById('focus-input').focus()
-    },
+
   },
   watch:{
     'currentDir':{
       handler: function (newValue){
-        this.focusInput = this.currentDir
+        this.dirPath = this.currentDir
       },
       deep:true
-    }
-  },
-  mounted() {
-    if(this.currentDir){
-      this.focusInput = this.currentDir
-      console.log(this.focusInput);
     }
   },
 }

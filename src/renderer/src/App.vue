@@ -1,40 +1,27 @@
 <template>
   <main class="main-container">
     <NavBar 
-      :currentDir="currentDir" 
-      @searchNewDir="fileList = getDirInfo($event), dirHistory.push($event)"
-      @setFocus="this.componentFocus = $event">
-    </NavBar>
+      :currentDir="currentDir"
+      @getPath="fileList = getDirInfo($event), dirHistory.push($event)"
+      @historyBack="test()"
+      @historyForth="test()"
+      @dirUp="test()"
+      @dirRefresh="test()"
+      @showShortcuts="test()"
+      @showFeatures="test()"
+    ></NavBar>
 
     <div class="content-container">
+
+      <FileList 
+        :fileList="fileList"
+        :currentDir="currentDir"
+        :homeDirectory="appConfig.homeDirectory"
+      ></FileList>
+
+    </div>
+    <!-- <div class="content-container">
   
-      <ul v-if="fileList" class="file-list" id="file-list">
-        
-        <FileListItem :isHeader="true"/>
-        
-        <FileListItem 
-          :isInput="true" 
-          :currentDir="currentDir"
-          @reloadCurrentDir="this.reloadDir()"
-          @sendInputErrorMessage="showMessage($event)"
-          @sendInputOkMessage="showMessage($event)"
-        />
-
-        <template v-for="(file, index) in fileList" :key="index">
-
-          <FileListItem
-            :fileItem="file"
-            :itemIndex="index"
-            @setListItemFocus="this.tabManaging($event)"
-            @focusListComponent="this.componentFocus = 'list'"
-            @openFileOrDir="openFileOrDir($event)"
-          />
-          
-        </template>
-
-        
-        
-      </ul>
 
       <div v-if="fileList.length == 0 && !appConfig.homeDirectory" class="prompt-home-dir">
         <h1 class="explorer-title">NeoN Explorer</h1>
@@ -96,13 +83,14 @@
         <input id="lineSearch-input" type="text" v-model="lineSelect" @keydown.enter.prevent="(selectLine(lineSelect))">
       </div>
     </dialog>
-
-    <SemiCli :currentDir="currentDir"></SemiCli>
+    -->
+    <SemiCli :currentDir="currentDir"></SemiCli> 
   </main>
 </template>
 
 <script>
 import NavBar from './components/NavBar.vue';
+import FileList from './components/FileList.vue';
 import FileListItem from './components/FileListItem.vue';
 import MessageAlert from './components/messageAlert.vue';
 import SemiCli from './components/SemiCli.vue';
@@ -150,11 +138,14 @@ export default {
   },
   components:{
     NavBar,
+    FileList,
     FileListItem,
     MessageAlert,
     SemiCli
   },
   methods: {
+
+    test(){},
 
     showMessage(msg){
       this.systemMessage = msg
@@ -711,7 +702,7 @@ export default {
       this.tabManager = Array.from(document.querySelectorAll('.file-item'))
     }
 
-    this.currentDir = this.appConfig.homeDirectory
+    this.currentDir = await this.appConfig.homeDirectory
 
   },
 }

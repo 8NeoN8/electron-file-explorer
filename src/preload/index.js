@@ -11,6 +11,7 @@ const api = {
   createFile: async (path, name) => electronAPI.ipcRenderer.invoke('IPC_CreateFile', {path, name}),
   createDir: async (path, name) => electronAPI.ipcRenderer.invoke('IPC_CreateDir', {path, name}),
   getDirInfo: async (dir) => electronAPI. ipcRenderer.invoke('IPC_GetDirInfo', dir),
+  verifyPath: async (path) => electronAPI. ipcRenderer.invoke('IPC_VerifyPath', path),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

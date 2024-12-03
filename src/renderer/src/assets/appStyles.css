@@ -2,8 +2,10 @@
   font-size: 16px;
   font-family: monospace;
   --font-green: rgb(71, 219, 71);
+  --font-green-hover: rgb(80, 188, 80);
   --dark-space: rgb(26, 25, 28);
   --light-dark-space: rgb(40, 40, 45);
+  --transparent: rgba(0, 0, 0, 0);;
 }
 
 *{
@@ -21,7 +23,7 @@
 }
 
 .content-container{
-  height: calc(100% - 4.2rem);
+  height: calc(100% - 5rem);
   background-color: var(--light-dark-space);
   overflow-y: auto;
 }

@@ -138,6 +138,30 @@ async function createDir(dirPath, dirName){
 
 }
 
+async function verifyPath(path){
+try {
+  const isError = await fs.promises.access(path, fs.constants.F_OK)
+
+  if(!isError){
+    const okResult = {
+      header: 'Path OK',
+      msg: `Path exists at: ${path}`,
+      type: 'ok' 
+    }
+  
+    return okResult
+  }
+} catch (err) {
+  const errorResult = {
+    header: err.code,
+    msg: err.Error,
+    type: 'error'
+  }
+
+  return errorResult
+}
+}
+
 async function runCmd(command) {
   const { stdout, stderr } = await exec(command);
   return stdout
@@ -314,6 +338,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('IPC_GetDirInfo', (event, data) => {
     return getDirInfo(data)
+  })
+
+  ipcMain.handle('IPC_VerifyPath', (event, data) => {
+    return verifyPath(data)
   })
 
   ipcMain.handle('testingMsg', ()=>{

@@ -215,5 +215,5 @@ export default {
 </script>
 
 <style>
-@import '../assets/fileItem.css';
+@import '../assets/fileListItem.css';
 </style>
