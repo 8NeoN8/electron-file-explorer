@@ -1,0 +1,33 @@
+.command-line{
+  color: var(--font-green);
+  width: 100%;
+  height: 4rem;
+  background-color: var(--dark-space);
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 1rem;
+}
+
+.command-line-info{
+  display: flex;
+}
+
+.current-dir-display{
+  text-overflow: ellipsis;
+}
+
+.current-dir-display:hover{
+  cursor: pointer;
+}
+
+.command-line-input{
+  width: 95%;
+  background-color: var(--transparent);
+  outline: none;
+  border: none;
+  border-bottom: var(--font-green) 1px solid;
+  text-overflow: ellipsis;
+  font-size: 1rem;
+  color: var(--font-green);
+}

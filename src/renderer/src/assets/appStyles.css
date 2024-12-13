@@ -23,77 +23,20 @@
 }
 
 .content-container{
-  height: calc(100% - 5rem);
+  height: calc(100% - 2rem);
   background-color: var(--light-dark-space);
   overflow-y: auto;
+  display:flex;
 }
 
-/** Element when no home dir has been set */
-
-.prompt-home-dir{
-  text-align: center;
-  padding: 1rem;
-  background-color: var(--light-dark-space);
+.command-line-open{
+  height: calc(100% - 6rem);
 }
 
-/** Elements when no home dir has been set */
-
-/** File List elements */
-
-.file-list{
-  list-style: none;
-  background-color: var(--dark-space);
-  /* height: calc(100% - 1.5rem); */
-  color: var(--font-green);
-}
-
-
-
-/* .file-item{
-  cursor: pointer;
-  background-color: var(--dark-space);
-  display: flex;
-  justify-content: space-between;
-}
-
-.file-item-focus{
-  background-color: var(--light-dark-space);
-  outline: none;
-}
-
-.file-item-component{
-  border-right: 1px solid var(--font-green);
-  width: 20%;
-  padding: 0.1rem 0.3rem;
-  padding-right: 0.5rem;
-  text-overflow: ellipsis;
-  text-wrap: nowrap;
-}
-
-.file-size{
-  text-align: right;
-}
-
-.file-item-header{
-  border-right: 1px solid var(--font-green);
-  width: 20%;
-  padding: 0.2rem 0.3rem;
-  text-align: left;
-}
-
-.file-name{
-  width: 40%;
-}
-
-.focus-input{
-  width: 50%;
-} */
 
 .hidden{
   display: none;
 }
-
-/** File List elements */ 
 
 
 .lineSearch{

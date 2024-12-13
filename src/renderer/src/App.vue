@@ -11,7 +11,13 @@
       @showFeatures="test()"
     ></NavBar>
 
-    <div class="content-container">
+    <div class="content-container" :class="commandLineOpen ? 'command-line-open': null">
+
+      <SideBar
+        @openQuickAccess="openFileOrDir($event)"
+        @openSearchResult="openFileOrDir($event)"
+        :isShowing="sideBarOpen"
+      ></SideBar>
 
       <FileList 
         :fileList="fileList"
@@ -84,7 +90,7 @@
       </div>
     </dialog>
     -->
-    <SemiCli :currentDir="currentDir"></SemiCli> 
+    <CommandLine :currentDir="currentDir" :isShowing="commandLineOpen"></CommandLine> 
   </main>
 </template>
 
@@ -93,7 +99,8 @@ import NavBar from './components/NavBar.vue';
 import FileList from './components/FileList.vue';
 import FileListItem from './components/FileListItem.vue';
 import MessageAlert from './components/messageAlert.vue';
-import SemiCli from './components/SemiCli.vue';
+import CommandLine from './components/CommandLine.vue';
+import SideBar from './components/SideBar.vue';
 const remote = require('@electron/remote');
 const fs = require('fs');
 const path = require('path');
@@ -133,7 +140,9 @@ export default {
         header: 'Placeholder',
         msg: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo, dolor',
         type:'ok'
-      }
+      },
+      commandLineOpen: false,
+      sideBarOpen: false,
     }
   },
   components:{
@@ -141,7 +150,8 @@ export default {
     FileList,
     FileListItem,
     MessageAlert,
-    SemiCli
+    CommandLine,
+    SideBar
   },
   methods: {
 
@@ -253,6 +263,7 @@ export default {
     },
 
     openFileOrDir(fileOrDir){
+      console.log(fileOrDir);
       let isDir = fs.statSync(fileOrDir.filePath).isDirectory()
       if(isDir){
         this.fileList = this.getDirInfo(fileOrDir.filePath)

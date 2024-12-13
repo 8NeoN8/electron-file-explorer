@@ -1,15 +1,15 @@
 <template>
 
   <ul v-if="fileList" class="file-list" id="file-list">
-
+    
     <div v-if="fileList.length == 0 && homeDirectory" class="prompt-home-dir">
       <h1 class="explorer-title">NeoN Explorer</h1>
       <p class="explorer-description">
-        Simple file explorer made with electron, visit the <a href="#">github</a> to know more!
+        Simple file explorer made with electron, visit the <a href="#" class="description-link">github</a> to know more!
       </p>
 
       <div class="set-home-dir-call">
-        Click <a href="#" class="change-home-dir-link" @click="changeHomeDir()">here</a> to set the home directory the app will open on
+        Click <a href="#" class="change-home-dir-link description-link" @click="changeHomeDir()">here</a> to set the home directory the app will open on launch
       </div>
 
     </div>
@@ -58,7 +58,7 @@ export default {
   ],
   props:{
     fileList:{
-      type: Array,
+      type: Array || Promise,
       default: []
     },
     currentDir:{

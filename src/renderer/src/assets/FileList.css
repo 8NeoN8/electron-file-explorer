@@ -1,0 +1,19 @@
+.file-list{
+  list-style: none;
+  color: var(--font-green);
+  width: 100%;
+}
+
+.list-item-container{
+  background-color: var(--light-dark-space);
+}
+
+.prompt-home-dir{
+  text-align: center;
+  padding: 1rem;
+  background-color: var(--light-dark-space);
+}
+
+.description-link{
+  color: white;
+}

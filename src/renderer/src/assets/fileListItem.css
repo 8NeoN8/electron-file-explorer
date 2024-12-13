@@ -19,6 +19,17 @@
   text-wrap: nowrap;
 }
 
+.file-list-input{
+  width: 100%;
+  background-color: var(--transparent);
+  outline: none;
+  border: var(--font-green) 1px solid;
+  text-overflow: ellipsis;
+  font-size: 1rem;
+  color: var(--font-green);
+  padding-left: 0.5rem;
+}
+
 .file-size{
   text-align: right;
 }

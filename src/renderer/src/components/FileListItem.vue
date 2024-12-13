@@ -1,6 +1,6 @@
 <template>
 
-<div>
+<div class="list-item-container">
 
   <li v-if="!isInput"
     tabindex="0"  
@@ -32,7 +32,7 @@
       {{ isHeader ? 'Name' : fileItem.fileName }}
     </div>
     <div class="file-list-item-component file-create-date">
-      {{ isHeader ? 'CreationDate' : fileItem.birthtime }}
+      {{ isHeader ? 'CreateDate' : fileItem.birthtime }}
     </div>
     <div class="file-list-item-component file-type">
       <!-- <i 
@@ -50,16 +50,17 @@
   
   <li v-if="isInput" 
     id="file-list-input"
-    class="file-input-item hidden"
+    class="file-input-item"
     
   >
     <input 
-      type="text" 
-      id="list-input" 
-      @blur="hideInput()" 
+      type="text"
+      class="file-list-input"
+      id="file-list-input" 
+      @blur="hideInput()"
       @keypress.enter="CheckAnsSend(fileNameCreation)" 
       @keyup.esc="hideInput()"
-      @input="validateInput()" 
+      @input="validateInput()"
       v-model="fileNameCreation"
     >
   </li>
