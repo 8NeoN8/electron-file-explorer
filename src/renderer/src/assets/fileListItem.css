@@ -5,7 +5,7 @@
   justify-content: space-between;
 }
 
-.file-list-item-focus{
+.file-list-item:focus{
   background-color: var(--light-dark-space);
   outline: none;
 }
@@ -36,6 +36,7 @@
 
 .file-header-item{
   display: flex;
+  border-bottom: var(--font-green) 1px solid;
 }
 
 .file-number{
@@ -44,6 +45,9 @@
 
 .file-name{
   width: 40%;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .focus-input{

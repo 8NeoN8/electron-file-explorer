@@ -1,14 +1,14 @@
 <template>
-  <main class="main-container">
+  <main class="main-container" @contextmenu="deployGeneralContext($event)">
     <NavBar 
       :currentDir="currentDir"
-      @getPath="fileList = getDirInfo($event), dirHistory.push($event)"
+      @getPath="setDir($event), dirHistory.push($event)"
       @historyBack="test()"
       @historyForth="test()"
       @dirUp="test()"
       @dirRefresh="test()"
       @showShortcuts="test()"
-      @showFeatures="test()"
+      @showFeatures="showFeatures = true"
     ></NavBar>
 
     <div class="content-container" :class="commandLineOpen ? 'command-line-open': null">
@@ -23,6 +23,14 @@
         :fileList="fileList"
         :currentDir="currentDir"
         :homeDirectory="appConfig.homeDirectory"
+
+        @reloadCurrentDir="test()"
+        @openFileOrDir="test()"
+        @focusListItem="test()"
+        @focusListComponent="test()"
+        @sendIputErrorMessage="test()"
+        @sendInputOkMessage="test()"
+        @openTargetContext="deployContextFocused($event)"
       ></FileList>
 
     </div>
@@ -90,21 +98,43 @@
       </div>
     </dialog>
     -->
-    <CommandLine :currentDir="currentDir" :isShowing="commandLineOpen"></CommandLine> 
+    <CommandLine :currentDir="currentDir" :isShowing="commandLineOpen"></CommandLine>
+    <FeaturesPopup 
+      :isShowing="showFeatures"
+      @close="showFeatures = false"
+    >
+    </FeaturesPopup>
+
+    <ContextMenu 
+      @hideMenu="showContextMenu = false"
+      :itemFocus="contextItemFocus"
+      :isShowing="showContextMenu"
+      :mousePos="contextPos"
+      :context="'file'"
+      :isAtBottom="false"
+      :isAtRight="false"
+    ></ContextMenu>
   </main>
 </template>
 
 <script>
+
+
+
 import NavBar from './components/NavBar.vue';
 import FileList from './components/FileList.vue';
 import FileListItem from './components/FileListItem.vue';
 import MessageAlert from './components/messageAlert.vue';
 import CommandLine from './components/CommandLine.vue';
 import SideBar from './components/SideBar.vue';
+import FeaturesPopup from './components/FeaturesPopup.vue';
+import ContextMenu from './components/ContextMenu.vue';
 const remote = require('@electron/remote');
 const fs = require('fs');
 const path = require('path');
 const exec = require('child_process').exec;
+
+const { ipcRenderer } = require('electron')
 
 export default {
   data() {
@@ -143,6 +173,14 @@ export default {
       },
       commandLineOpen: false,
       sideBarOpen: false,
+      showFeatures: false,
+      showContextMenu: false,
+      contextPos:{
+        posX: 0,
+        posY: 0
+      },
+      contextItemFocus: null,
+
     }
   },
   components:{
@@ -151,17 +189,40 @@ export default {
     FileListItem,
     MessageAlert,
     CommandLine,
-    SideBar
+    SideBar,
+    FeaturesPopup,
+    ContextMenu
   },
   methods: {
 
     test(){},
+
+    deployGeneralContext(clickEvent){
+      this.contextPos = {
+        posX: clickEvent.clientX,
+        posY: clickEvent.clientY
+      }
+      this.contextItemFocus = {
+        type: 'general',
+      }
+      this.showContextMenu = true
+    },
+    deployContextFocused(eventData){
+      //console.log(eventData.clickEvent.target.parentNode);
+      this.contextPos = {
+        posX: eventData.clickEvent.clientX,
+        posY: eventData.clickEvent.clientY
+      }
+      this.contextItemFocus = eventData
+      this.showContextMenu = true
+    },
 
     showMessage(msg){
       this.systemMessage = msg
       console.log(this.systemMessage)
       MessageAlert.methods.showMessage()
     },
+
     setFocusStyle(){
       this.focusTab.classList.add('file-item-focus')
     },
@@ -231,7 +292,12 @@ export default {
       
     },
 
+    async setDir(event){
+      this.fileList = await this.getDirInfo(event)
+    },
+
     async getDirInfo(dir){
+      this.fileList = []
       this.currentDir = dir
       return await window.api.getDirInfo(dir)
     },
@@ -714,6 +780,12 @@ export default {
     }
 
     this.currentDir = await this.appConfig.homeDirectory
+
+    /* ipcRenderer.send('pruebamsg', 'test de mensaje pal back')
+
+    ipcRenderer.on('respuestamsg', (event, arg) => {
+      console.log('Si llego algo del back>>: ',arg);
+    }) */
 
   },
 }

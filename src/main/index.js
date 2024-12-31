@@ -286,8 +286,10 @@ async function getDirInfo(dirPath){
       fileName: file,
       isDir: fs.statSync(filePath).isDirectory(),
       size: Math.round(fileInfo.size / 1024),
-      birthtime: format(fileInfo.birthtime, "dd/MM/yyyy")
+      birthtime: format(fileInfo.birthtime, "dd/MM/yyyy"),
+      extention: fs.statSync(filePath).isDirectory() ? null : file.split('.').pop()
     }
+
 
     return newFile
   })
@@ -308,6 +310,10 @@ app.whenReady().then(() => {
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
+  })
+
+  ipcMain.on('pruebamsg', (event, arg) => {
+    event.sender.send('respuestamsg', 'test res')
   })
 
   // IPC test

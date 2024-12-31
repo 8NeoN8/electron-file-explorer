@@ -19,9 +19,12 @@
     <FileListItem 
       :isInput="true" 
       :currentDir="currentDir"
-      @reloadCurrentDir="this.reloadDir()"
-      @sendInputErrorMessage="showMessage($event)"
-      @sendInputOkMessage="showMessage($event)"
+      @reloadCurrentDir="this.$emit('reloadCurrentDir')"
+      @openFileOrDir="this.$emit('openFileOrDir', $event)"
+      @focusListItem="this.$emit('focusListItem', $event)"
+      @focusListComponent="this.$emit('focusListComponent', $event)"
+      @sendInputErrorMessage="this.$emit('sendInputErrorMessage',$event)"
+      @sendInputOkMessage="this.$emit('sendInputOkMessage',$event)"
     />
 
     <template v-for="(file, index) in fileList" :key="index">
@@ -29,9 +32,13 @@
       <FileListItem
         :fileItem="file"
         :itemIndex="index"
-        @setListItemFocus="this.tabManaging($event)"
-        @focusListComponent="this.componentFocus = 'list'"
-        @openFileOrDir="openFileOrDir($event)"
+        @reloadCurrentDir="this.$emit('reloadCurrentDir')"
+        @openFileOrDir="this.$emit('openFileOrDir', $event)"
+        @focusListItem="this.$emit('focusListItem', $event)"
+        @focusListComponent="this.$emit('focusListComponent', $event)"
+        @sendInputErrorMessage="this.$emit('sendInputErrorMessage',$event)"
+        @sendInputOkMessage="this.$emit('sendInputOkMessage',$event)"
+        @openContext="this.$emit('openTargetContext', $event)"
       />
       
     </template>
@@ -54,11 +61,18 @@ export default {
     FileListItem,
   },
   emits:[
+  'reloadCurrentDir',
+  'openFileOrDir',
+  'focusListItem',
+  'focusListComponent',
+  'sendInputErrorMessage',
+  'sendInputOkMessage',
+  'openTargetContext'
 
   ],
   props:{
     fileList:{
-      type: Array || Promise,
+      type: Array,
       default: []
     },
     currentDir:{
@@ -66,6 +80,18 @@ export default {
     },
     homeDirectory:{
       type: String,
+    }
+  },
+  computed: {
+    async fileListResolved(){
+      return await this.fileList
+    }  
+  },
+  watch:{
+    'fileList':{
+      handler: async function(newValue){
+        console.log(await this.fileListResolved);
+      }, deep: true
     }
   },
   methods: {

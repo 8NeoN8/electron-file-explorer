@@ -17,15 +17,16 @@
         id="nav-bar-dir-path" 
         class="nav-bar-dir-path"
         v-model="dirPath"
-        @keypress.enter="validateInput()"
-        @blur="dirPath = currentDir"
+        @keypress.enter="searching = true; validateInput()"
+        @blur="searching == false ? dirPath = currentDir : null"
+        @focus="searching = false"
       >
     </div>
 
     <div class="extra-options nav-bar-buttons">
-      <button data-tooltip="Refresh" class="pi pi-refresh nav-button refresh-button" @click="this.$emit('dirRefresh')"></button>
-      <button data-tooltip="Shortcut List" class="pi pi-book nav-button shortcut-sheet-button" @click="this.$emit('showShortcuts')"></button>
-      <button data-tooltip="Feature List" class="pi pi-list nav-button feature-list-button" @click="this.$emit('showFeatures')"></button>
+      <button class="pi pi-refresh nav-button refresh-button" @click="this.$emit('dirRefresh')"></button>
+      <button class="pi pi-book nav-button shortcut-sheet-button" @click="this.$emit('showShortcuts')"></button>
+      <button class="pi pi-list nav-button feature-list-button" @click="this.$emit('showFeatures')"></button>
     </div>
   
 
@@ -38,7 +39,8 @@ export default {
   data() {
     return {
       focusInput: null,
-      dirPath: null
+      dirPath: null,
+      searching: false
     }
   },
   emits:[
@@ -76,6 +78,8 @@ export default {
       const result = await this.IPC_verifyPath(this.dirPath)
       if(result.type == 'ok'){
         document.getElementById('nav-bar-dir-path').blur()
+        console.log('entrooooo');
+        console.log(result, this.dirPath);
         this.$emit('getPath',this.dirPath)
       }
     },

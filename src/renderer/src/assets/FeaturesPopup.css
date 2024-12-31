@@ -1,0 +1,61 @@
+.feature-container{
+  z-index: 100;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: hsla(0, 0%, 0%, 0.4)
+}
+
+.feature-list{
+  background-color: var(--light-dark-space);
+  color: var(--font-green);
+  list-style: none;
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 90%;
+}
+
+.feature-item{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  margin-bottom: 0.5rem;
+}
+
+.feature-list-close-button{
+  padding: 0.5rem;
+  background-color: var(--dark-space);
+  color: var(--font-green);
+  margin-bottom: 0.5rem;
+  border-radius: 5px;
+  text-align: center;
+  font-weight: bolder;
+}
+
+.feature-list-close-button:hover{
+  cursor: pointer;
+  background-color: var(--font-green-hover);
+  color: var(--light-dark-space);
+}
+
+.feature-list-close-button:active{
+  background-color: var(--font-green);
+  color: var(--dark-space);
+}
+
+.done-item{
+  color: cyan;
+}
+
+.doing-item{
+  color: orange;
+}
+
+.not-item{
+  color: red;
+}

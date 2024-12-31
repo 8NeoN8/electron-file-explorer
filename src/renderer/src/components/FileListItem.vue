@@ -3,22 +3,15 @@
 <div class="list-item-container">
 
   <li v-if="!isInput"
-    tabindex="0"  
+    tabindex="0"
+    @click="openFileItem(fileItem)"
+    @doubleclick="openFileItem(fileItem)"
+    @focus="focusItem($event, fileItem)"
+    @keyup.enter.self="openFileItem(fileItem)"
     @blur="rmFileFocus($event.target)"
-    @keyup.enter.self="this.$emit('openFileOrDir', fileItem)"
-    @click="this.$emit('openFileOrDir', fileItem)"
-    @focus="
-      this.$emit('setListItemFocus',[$event,fileItem]), 
-      this.$emit('focusListComponent'),
-      setFileFocus($event.target)
-    "
-    :class="{
-      'file-list-item': !isHeader && !isInput, 
-      'file-header-item': isHeader
-    }"
-  
+    @contextmenu="this.$emit('openContext', {clickEvent: $event, data: fileItem})"
+    :class="{ 'file-list-item': !isHeader && !isInput,'file-header-item': isHeader}"  
     :id="isHeader ? 'file-list-header' : `file-item-${itemIndex}`"
-  
   >
   
     <div class="file-list-item-component file-number">
@@ -35,11 +28,6 @@
       {{ isHeader ? 'CreateDate' : fileItem.birthtime }}
     </div>
     <div class="file-list-item-component file-type">
-      <!-- <i 
-        v-if="!isHeader"
-        class="file-icon pi" 
-        :class="fileItem.isDir ? 'pi-folder' : 'pi-file'"
-      ></i> -->
       {{ isHeader ? 'Type' : fileItem.isDir ? 'Folder' : 'File' }}
     </div>
     <div class="file-list-item-component file-size">
@@ -50,7 +38,7 @@
   
   <li v-if="isInput" 
     id="file-list-input"
-    class="file-input-item"
+    class="file-input-item hidden"
     
   >
     <input 
@@ -101,31 +89,47 @@ export default {
     }
   },
   emits:[
-    'setListItemFocus',
+    'focusListItem',
     'focusListComponent',
     'openFileOrDir',
+    'reloadCurrentDir',
     'sendInputErrorMessage',
     'sendInputOkMessage',
-    'reloadCurrentDir'
+    'openContext'
   ],
   computed:{
     formattedItemIndex(){
-      if(this.itemIndex < 10){
-        return `00${this.itemIndex}`
+      const item = this.itemIndex
+      if(item < 10){
+        return `00${item}`
       }
-      if(this.itemIndex > 9 && this.itemIndex < 100){
-        return `0${this.itemIndex}`
+      if(item > 9 && item < 100){
+        return `0${item}`
       }
-      if(itemIndex > 99){
-        return this.itemIndex
+      if(item > 99){
+        return item
       }
     }
   },
   methods: {
+    openFileItem(item){
+      this.$emit('openFileOrDir', item)
+    },
+    focusItem(event, item){
+      this.$emit('focusListItem',[event,item])
+      this.$emit('focusListComponent', 'list')
+      /*
+       * Check to make this diferently later and rename pls
+       * this.setFileFocus($event.target)
+      */
+    },
+
     setFileFocus(htmlEl){
+      //! used for the multiple selection of files
       htmlEl.classList.add('file-list-item-focus')
     },
     rmFileFocus(htmlEl){
+      //! used for the multiple selection of files
       htmlEl.classList.remove('file-list-item-focus')
     },
     hideInput(){
