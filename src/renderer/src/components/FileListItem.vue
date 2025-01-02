@@ -36,17 +36,16 @@
   
   </li>
   
-  <li v-if="isInput" 
+  <li v-if="isInput && isShowing" 
     id="file-list-input"
-    class="file-input-item hidden"
-    
+    class="file-input-item"
   >
     <input 
       type="text"
       class="file-list-input"
       id="file-list-input" 
       @blur="hideInput()"
-      @keypress.enter="CheckAnsSend(fileNameCreation)" 
+      @keypress.enter="CheckAnsSend(fileNameCreation)"
       @keyup.esc="hideInput()"
       @input="validateInput()"
       v-model="fileNameCreation"
@@ -86,6 +85,10 @@ export default {
     currentDir:{
       type: String,
       default: null
+    },
+    isShowing:{
+      type: Boolean,
+      default: false
     }
   },
   emits:[
@@ -116,7 +119,7 @@ export default {
       this.$emit('openFileOrDir', item)
     },
     focusItem(event, item){
-      this.$emit('focusListItem',[event,item])
+      this.$emit('focusListItem',{clickEvent: event, file: item})
       this.$emit('focusListComponent', 'list')
       /*
        * Check to make this diferently later and rename pls
@@ -137,8 +140,8 @@ export default {
       document.getElementById('file-list-input').classList.add('hidden')
     },
     focusInput(){
-      document.getElementById('file-list-input').classList.remove('hidden')
-      document.getElementById('list-input').focus()
+      const inp = document.getElementById('file-list-input')
+      if(inp) inp.focus()
     },
     validateInput(){
       let notValidChars = ["'",'<','>',':','"','|','?','*', '\\', '/']
@@ -216,6 +219,16 @@ export default {
       return await window.api.createDir(dirPath, fileName)
     },
   },
+  watch:{
+    'isShowing':{
+      handler: function(newValue){
+        if(newValue == true && this.isInput){
+          const inp = document.getElementById('file-list-input')
+          if(inp) inp.focus()
+        }
+      },deep: true
+    }
+  }
 }
 </script>
 

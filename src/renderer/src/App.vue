@@ -2,7 +2,7 @@
   <main class="main-container" @contextmenu="deployGeneralContext($event)">
     <NavBar 
       :currentDir="currentDir"
-      @getPath="setDir($event), dirHistory.push($event)"
+      @getPath="setDir($event), manageHistory($event)"
       @historyBack="test()"
       @historyForth="test()"
       @dirUp="test()"
@@ -23,11 +23,12 @@
         :fileList="fileList"
         :currentDir="currentDir"
         :homeDirectory="appConfig.homeDirectory"
+        :showInput="showFileInput"
 
         @reloadCurrentDir="test()"
-        @openFileOrDir="test()"
-        @focusListItem="test()"
-        @focusListComponent="test()"
+        @openFileOrDir="openFileOrDir($event)"
+        @focusListItem="tabManaging($event)"
+        @focusListComponent="componentFocus = $event"
         @sendIputErrorMessage="test()"
         @sendInputOkMessage="test()"
         @openTargetContext="deployContextFocused($event)"
@@ -89,7 +90,6 @@
 
     </dialog>
 
-    <MessageAlert :messageObject="systemMessage"/>
 
     <dialog :open="isLineSearch" class="lineSearch" style="width: 50%; position: absolute; top: 5%; left: 25%;">
       <div class="test-dialog" style="display: flex; justify-content: space-around">
@@ -99,6 +99,9 @@
     </dialog>
     -->
     <CommandLine :currentDir="currentDir" :isShowing="commandLineOpen"></CommandLine>
+
+    <MessageAlert :messageObject="systemMessage"/>
+
     <FeaturesPopup 
       :isShowing="showFeatures"
       @close="showFeatures = false"
@@ -113,6 +116,7 @@
       :context="'file'"
       :isAtBottom="false"
       :isAtRight="false"
+      @openItem="openFileOrDir($event)"
     ></ContextMenu>
   </main>
 </template>
@@ -180,6 +184,7 @@ export default {
         posY: 0
       },
       contextItemFocus: null,
+      showFileInput: false,
 
     }
   },
@@ -201,9 +206,6 @@ export default {
       this.contextPos = {
         posX: clickEvent.clientX,
         posY: clickEvent.clientY
-      }
-      this.contextItemFocus = {
-        type: 'general',
       }
       this.showContextMenu = true
     },
@@ -292,18 +294,7 @@ export default {
       
     },
 
-    async setDir(event){
-      this.fileList = await this.getDirInfo(event)
-    },
-
-    async getDirInfo(dir){
-      this.fileList = []
-      this.currentDir = dir
-      return await window.api.getDirInfo(dir)
-    },
-
     manageHistory(dir){
-
       if(this.dirHistory[this.historyIndex+1]){
         this.dirHistory = this.dirHistory.slice(0, this.historyIndex+1) 
       }
@@ -328,44 +319,39 @@ export default {
       }
     },
 
+    async setDir(event){
+      this.fileList = await this.getDirInfo(event)
+    },
+
+    async getDirInfo(dir){
+      this.fileList = []
+      this.currentDir = dir
+      return await window.api.getDirInfo(dir)
+    },
+
     openFileOrDir(fileOrDir){
-      console.log(fileOrDir);
       let isDir = fs.statSync(fileOrDir.filePath).isDirectory()
       if(isDir){
-        this.fileList = this.getDirInfo(fileOrDir.filePath)
+        this.setDir(fileOrDir.filePath)
         this.manageHistory(fileOrDir.filePath)
         this.tabManager[0].focus()
-
       }
 
       if(!isDir){
-        exec(this.getCommandLine() + ' ' + fileOrDir.filePath)
+        exec(`"${fileOrDir.filePath}"`)
       }
 
     },
 
-    getCommandLine(){
-      switch (process.platform) {
-        case 'darwin': 
-          return 'open';
-        case 'win32': 
-          return 'start';
-        case 'win64': 
-          return 'start';
-        default: 
-          return 'xdg-open';
-      }
-    },
-
-    tabManaging(e){
-      const event = e[0]
-      const file = e[1]
+    tabManaging(eventObject){
+      const event = eventObject.clickEvent
+      const file = eventObject.file
       this.tabManager = Array.from(document.getElementsByClassName('file-list-item'))
       this.focusTab = event.target
       this.focusFile = file
     },
 
-    async IPC_SendToTrash(){
+    async IPC_SendToTrash(){  
       //'D:\\MIS_NUEVOS_ARCHIVOS\\prueba recycle bin 2'
 
       console.log(this.multiSelection, this.selectedFiles, this.focusFile.filePath.toString());
@@ -487,8 +473,8 @@ export default {
             if(keyEvent.ctrlKey & keyEvent.shiftKey){
               this.focusFile = null
               this.focusTab = null
-              console.log(this.focusFile, this.focusTab);
-              FileListItem.methods.focusInput()
+              this.showFileInput = true
+              //FileListItem.methods.focusInput()
             }
           }
           break;
@@ -744,7 +730,7 @@ export default {
     await this.IPC_GetConfig()
 
     if(this.appConfig?.homeDirectory){
-      this.fileList = await this.getDirInfo(this.appConfig.homeDirectory)
+      this.setDir(this.appConfig.homeDirectory)
       this.dirHistory.push(this.appConfig.homeDirectory)
     }
   },

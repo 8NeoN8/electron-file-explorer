@@ -8,7 +8,7 @@
   background-color: var(--light-dark-space);
 }
 
-.prompt-home-dir{
+.prompt-home-dir, .empty-dir{
   text-align: center;
   padding: 1rem;
   background-color: var(--light-dark-space);
@@ -16,4 +16,10 @@
 
 .description-link{
   color: white;
+}
+
+.empty-dir-text{
+  font-weight: 300;
+  font-size: 1.1rem;
+  text-decoration: underline;
 }

@@ -55,8 +55,7 @@ export default {
   computed: {
     directory(){
       let temp = this.currentDir
-      return this.currentDir
-      
+      return temp
     },
     test(){
       return this.currentDir
@@ -78,8 +77,6 @@ export default {
       const result = await this.IPC_verifyPath(this.dirPath)
       if(result.type == 'ok'){
         document.getElementById('nav-bar-dir-path').blur()
-        console.log('entrooooo');
-        console.log(result, this.dirPath);
         this.$emit('getPath',this.dirPath)
       }
     },

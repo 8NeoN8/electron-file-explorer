@@ -61,7 +61,7 @@ export default {
         },
         {
           name: 'navBar navigation',
-          state: 'doing'
+          state: 'done'
         },
         {
           name: 'shortcut funtionality',
@@ -89,11 +89,11 @@ export default {
         },
         {
           name: 'Mouse selection controls',
-          state: 'not started'
+          state: 'doing'
         },
         {
           name: 'Mouse context menu',
-          state: 'not started'
+          state: 'doing'
         },
         {
           name: '',

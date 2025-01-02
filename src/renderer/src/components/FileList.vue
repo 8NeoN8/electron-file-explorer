@@ -2,7 +2,7 @@
 
   <ul v-if="fileList" class="file-list" id="file-list">
     
-    <div v-if="fileList.length == 0 && homeDirectory" class="prompt-home-dir">
+    <div v-if="fileList.length == 0 && !homeDirectory" class="prompt-home-dir">
       <h1 class="explorer-title">NeoN Explorer</h1>
       <p class="explorer-description">
         Simple file explorer made with electron, visit the <a href="#" class="description-link">github</a> to know more!
@@ -14,10 +14,12 @@
 
     </div>
 
-    <FileListItem :isHeader="true"/>
+    <FileListItem  :isHeader="true"/>
+    
         
     <FileListItem 
-      :isInput="true" 
+      :isInput="true"
+      :isShowing="showInput"
       :currentDir="currentDir"
       @reloadCurrentDir="this.$emit('reloadCurrentDir')"
       @openFileOrDir="this.$emit('openFileOrDir', $event)"
@@ -42,6 +44,10 @@
       />
       
     </template>
+
+    <div v-if="fileList.length == 0 && homeDirectory" class="empty-dir" tabindex="0">
+      <h4 class="empty-dir-text">There are no files currently</h4>
+    </div>
 
   </ul>
 
@@ -80,17 +86,15 @@ export default {
     },
     homeDirectory:{
       type: String,
-    }
-  },
-  computed: {
-    async fileListResolved(){
-      return await this.fileList
-    }  
+    },
+    showInput:{
+      type: Boolean,
+    },
   },
   watch:{
     'fileList':{
-      handler: async function(newValue){
-        console.log(await this.fileListResolved);
+      handler: function(newValue){
+        //console.log(this.fileList);
       }, deep: true
     }
   },

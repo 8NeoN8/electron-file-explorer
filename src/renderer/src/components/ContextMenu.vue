@@ -1,13 +1,13 @@
 <template>
   <div class="context-menu" id="context-menu" v-show="isShowing" @mouseleave="this.$emit('hideMenu')">
     <ul v-if="context == 'file' || context == 'directory'" class="menu file-context-menu">
-      <li class="context-menu-item" @click="this.$emit('openItem', itemFocus)">Open</li>
-      <li class="context-menu-item" @click="this.$emit('unzipItem', itemFocus)" v-if="isZipped">Unzip</li>
-      <li class="context-menu-item" @click="this.$emit('changeItemName', itemFocus)">Change Name</li>
-      <li class="context-menu-item" @click="this.$emit('copyItem', itemFocus)">Copy</li>
-      <li class="context-menu-item" @click="this.$emit('cutItem', itemFocus)">Cut</li>
-      <li class="context-menu-item" @click="this.$emit('deleteItem', itemFocus)">Delete</li>
-      <li class="context-menu-item" @click="this.$emit('selectItem', itemFocus)">Select</li>
+      <li class="context-menu-item" @click="this.$emit('openItem', itemFocus.data);this.$emit('hideMenu')">Open</li>
+      <li class="context-menu-item" @click="this.$emit('unzipItem', itemFocus);this.$emit('hideMenu')" v-if="isZipped">Unzip</li>
+      <li class="context-menu-item" @click="this.$emit('changeItemName', itemFocus);this.$emit('hideMenu')">Change Name</li>
+      <li class="context-menu-item" @click="this.$emit('copyItem', itemFocus);this.$emit('hideMenu')">Copy</li>
+      <li class="context-menu-item" @click="this.$emit('cutItem', itemFocus);this.$emit('hideMenu')">Cut</li>
+      <li class="context-menu-item" @click="this.$emit('deleteItem', itemFocus);this.$emit('hideMenu')">Delete</li>
+      <li class="context-menu-item" @click="this.$emit('selectItem', itemFocus);this.$emit('hideMenu')">Select</li>
     </ul>
   </div>
 </template>
@@ -62,6 +62,11 @@ export default {
           this.showMenu()
         }
       },deep: true
+    },
+    'itemFocus':{
+      handler: function(newValue){
+        //console.log(this.itemFocus, 'imtefocus');
+      },deep: true
     }
   },
   methods: {
@@ -73,7 +78,7 @@ export default {
       menu.style.left = `${this.mousePos.posX-10}px`
 
       //* I have now with this, the item data that is used for the backend side and the html element that has to be modified in certain uses like selection
-      console.log(this.itemFocus.data,this.itemFocus.clickEvent?.target.parentNode);
+      //console.log(this.itemFocus.data,this.itemFocus.clickEvent?.target.parentNode);
     }
   },
 }
